@@ -1,0 +1,181 @@
+@import "tailwindcss";
+
+/* Theme Colors - Compatible with Header and Footer */
+@theme {
+  --color-theme: #EB0029;
+  --color-theme2: #FC791A;
+  --color-theme3: #FFBA00;
+  --color-title: #010F1C;
+  --color-text: #99A1AF;
+  --color-bg2: #F4F1EA;
+  --color-bg3: black;
+  --color-bgimg: #1E1E1E;
+  --font-oswald: var(--font-oswald);
+}
+
+/* Custom CSS Variables */
+:root {
+  /* Theme Colors - Compatible with Header and Footer */
+  --theme: #EB0029;
+  --theme2: #FC791A;
+  --title: #010F1C;
+  --text: #99A1AF;
+  --bg2: #F4F1EA;
+  --bg3: #030D19;
+  --white: #ffffff;
+  --black: #000000;
+  
+  /* Legacy Colors - For compatibility */
+  --primary-color: #000000;
+  --secondary-color: #676666;
+  --accent-color: #c3c3c3;
+  --background-color: #ffffff;
+  --text-color: #000000;
+  --border-color: #e5e5e5;
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+/* Font Family - Oswald as default */
+body {
+  font-family: var(--font-oswald), sans-serif;
+}
+
+/* Animations */
+@keyframes float-bob-y {
+  0% {
+    transform: translateY(-30px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(-30px);
+  }
+}
+
+@keyframes float-bob-x {
+  0% {
+    transform: translateX(0px);
+  }
+  50% {
+    transform: translateX(20px);
+  }
+  100% {
+    transform: translateX(0px);
+  }
+}
+
+.animate-float-bob-y {
+  animation: float-bob-y 3s ease-in-out infinite;
+}
+
+.animate-float-bob-x {
+  animation: float-bob-x 3s ease-in-out infinite;
+}
+
+/* Marquee Animation */
+.marquee-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.marquee-inner {
+  display: flex;
+  white-space: nowrap;
+}
+
+.marquee-inner.to-left {
+  animation: marquee-left 30s linear infinite;
+}
+
+@keyframes marquee-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Hide Scrollbar for Sidebar - Hide scrollbar while keeping scroll functionality */
+.sidebar-hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.sidebar-hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Global Custom Scrollbar - For the entire project */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #FFBA00 #1E1E1E;
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) - Global */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #1E1E1E;
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #FFBA00;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 186, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #FC791A;
+  box-shadow: 0 0 10px rgba(255, 186, 0, 0.6);
+  transform: scale(1.1);
+}
+
+/* Horizontal scrollbar */
+*::-webkit-scrollbar:horizontal {
+  height: 10px;
+}
+
+/* Scrollbar corner (where horizontal and vertical meet) */
+*::-webkit-scrollbar-corner {
+  background: #1E1E1E;
+  border-radius: 10px;
+}
+
+/* Rotate Animation - For continuous rotation */
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-rotate {
+  animation: rotate 10s linear infinite;
+}
+
+/* Slow Spin Animation for Circle Shape */
+@keyframes spin-slow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}

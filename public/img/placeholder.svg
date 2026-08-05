@@ -1,0 +1,28 @@
+<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="400" fill="#1a1a1a"/>
+  
+  <!-- Grid pattern for visual interest -->
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#2a2a2a" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="400" height="400" fill="url(#grid)"/>
+  
+  <!-- Icon: Image placeholder -->
+  <g transform="translate(200, 150)">
+    <!-- Image frame -->
+    <rect x="-60" y="-40" width="120" height="80" fill="none" stroke="#4a4a4a" stroke-width="3" rx="4"/>
+    <!-- Mountain/landscape icon -->
+    <path d="M -50 20 L -30 -10 L -10 10 L 10 -20 L 30 0 L 50 20 Z" fill="#3a3a3a" opacity="0.6"/>
+    <!-- Image lines (representing image) -->
+    <line x1="-50" y1="-30" x2="50" y2="-30" stroke="#4a4a4a" stroke-width="2"/>
+    <line x1="-50" y1="-20" x2="50" y2="-20" stroke="#4a4a4a" stroke-width="2"/>
+    <line x1="-50" y1="-10" x2="50" y2="-10" stroke="#4a4a4a" stroke-width="2"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="200" y="280" font-family="Arial, sans-serif" font-size="24" fill="#6a6a6a" text-anchor="middle" font-weight="300">No Image</text>
+</svg>
+
