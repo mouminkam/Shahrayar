@@ -1,4 +1,5 @@
-import axiosInstance from "./config/axios";
+/** PRODUCTION: return axiosInstance.post<ApiResponse>("/delivery/quote", { dropoff }); */
+import { mockResponse } from "../mocks/mockClient";
 import type { ApiResponse } from "./types";
 
 export interface DeliveryDropoff {
@@ -7,14 +8,9 @@ export interface DeliveryDropoff {
   address: string;
 }
 
-export const getDeliveryQuote = async (dropoff: DeliveryDropoff): Promise<ApiResponse> => {
-  return axiosInstance.post<ApiResponse, ApiResponse>("/delivery/quote", {
-    dropoff: {
-      lat: dropoff.lat,
-      lng: dropoff.lng,
-      address: dropoff.address,
-    },
-  });
+export const getDeliveryQuote = async (_dropoff: DeliveryDropoff): Promise<ApiResponse> => {
+  // Flat demo delivery fee — a real integration would call a routing/quote provider.
+  return mockResponse({ quote_id: `quote_mock_${Date.now()}`, fee: 3.5, eta_minutes: 35 });
 };
 
 const deliveryAPI = {

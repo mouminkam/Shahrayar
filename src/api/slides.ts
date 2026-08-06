@@ -1,12 +1,12 @@
-import axiosInstance from "./config/axios";
 import type { ApiResponse } from "./types";
+import { mockResponse } from "../mocks/mockClient";
+import { mockWebsiteSlides } from "../mocks/fixtures/slides";
 
-// Payload is consumed with direct property access (response.data.slides) across
-// components; Record<string, unknown> keeps that ergonomic without full modeling.
 type SlidesApiResponse = ApiResponse<Record<string, unknown>>;
 
-export const getWebsiteSlides = async (params: Record<string, unknown> = {}): Promise<SlidesApiResponse> => {
-  return axiosInstance.get<SlidesApiResponse, SlidesApiResponse>("/website-slides", { params });
+export const getWebsiteSlides = async (_params: Record<string, unknown> = {}): Promise<SlidesApiResponse> => {
+  // PRODUCTION: return axiosInstance.get<SlidesApiResponse>("/website-slides", { params });
+  return mockResponse({ slides: mockWebsiteSlides });
 };
 
 const slidesAPI = {

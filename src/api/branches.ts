@@ -1,33 +1,38 @@
-import axiosInstance from "./config/axios";
 import type { ApiResponse } from "./types";
+import { mockResponse } from "../mocks/mockClient";
+import { mockBranches, getMockDefaultBranch } from "../mocks/fixtures/branches";
+import { mockChefs } from "../mocks/fixtures/chefs";
 
-// Payloads are consumed with direct property access across components;
-// Record<string, unknown> keeps that ergonomic without modeling every field.
 type BranchesApiResponse = ApiResponse<Record<string, unknown>>;
 
-export const getAllBranches = async (params: Record<string, unknown> = {}): Promise<BranchesApiResponse> => {
-  return axiosInstance.get<BranchesApiResponse, BranchesApiResponse>("/branches", { params });
+export const getAllBranches = async (_params: Record<string, unknown> = {}): Promise<BranchesApiResponse> => {
+  // PRODUCTION: return axiosInstance.get<BranchesApiResponse>("/branches", { params });
+  return mockResponse({ branches: mockBranches });
 };
 
 export const getBranchById = async (branchId: string | number): Promise<BranchesApiResponse> => {
-  return axiosInstance.get<BranchesApiResponse, BranchesApiResponse>(`/branches/${branchId}`);
+  // PRODUCTION: return axiosInstance.get<BranchesApiResponse>(`/branches/${branchId}`);
+  const branch = mockBranches.find((b) => String(b.id) === String(branchId));
+  return mockResponse({ branch: branch ?? getMockDefaultBranch() });
 };
 
 export const getUpsellItems = async (
-  branchId: string | number,
-  params: Record<string, unknown> = {}
+  _branchId: string | number,
+  _params: Record<string, unknown> = {}
 ): Promise<BranchesApiResponse> => {
-  return axiosInstance.get<BranchesApiResponse, BranchesApiResponse>(`/branches/${branchId}/upsell-items`, { params });
+  // PRODUCTION: return axiosInstance.get<BranchesApiResponse>(`/branches/${branchId}/upsell-items`, { params });
+  const { mockMenuItems } = await import("../mocks/fixtures/menuItems");
+  return mockResponse({ items: mockMenuItems.filter((i) => i.category_id === 4).slice(0, 3) });
 };
 
-export const getChefs = async (branchId: string | number): Promise<BranchesApiResponse> => {
-  return axiosInstance.get<BranchesApiResponse, BranchesApiResponse>("/chefs", {
-    params: { branch_id: branchId },
-  });
+export const getChefs = async (_branchId: string | number): Promise<BranchesApiResponse> => {
+  // PRODUCTION: return axiosInstance.get<BranchesApiResponse>("/chefs", { params: { branch_id: branchId } });
+  return mockResponse({ chefs: mockChefs });
 };
 
 export const getDefaultBranch = async (): Promise<BranchesApiResponse> => {
-  return axiosInstance.get<BranchesApiResponse, BranchesApiResponse>("/branches/default");
+  // PRODUCTION: return axiosInstance.get<BranchesApiResponse>("/branches/default");
+  return mockResponse({ branch: getMockDefaultBranch() });
 };
 
 const branchesAPI = {

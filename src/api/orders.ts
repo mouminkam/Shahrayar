@@ -1,9 +1,9 @@
 /**
- * Orders API endpoints
- * Handles order creation, retrieval, cancellation, and tracking
+ * Orders API — mocked for this portfolio build (see src/mocks/mockClient.ts).
+ * PRODUCTION: every function would call `axiosInstance` against `/orders/*`.
  */
-
-import axiosInstance from "./config/axios";
+import { mockResponse, mockError } from "../mocks/mockClient";
+import { mockOrders, findMockOrderById } from "../mocks/fixtures/users";
 import type { ApiResponse } from "./types";
 
 export interface OrderItemSelectedOptions {
@@ -54,44 +54,61 @@ export interface AvailableCouponsOrderData {
   items: Pick<OrderItemInput, "menu_item_id" | "quantity">[];
 }
 
-export const getUserOrders = async (params: Record<string, unknown> = {}): Promise<ApiResponse> => {
-  return axiosInstance.get<ApiResponse, ApiResponse>("/orders", { params });
+let mockOrderIdCounter = 2000;
+
+export const getUserOrders = async (_params: Record<string, unknown> = {}): Promise<ApiResponse> => {
+  // PRODUCTION: return axiosInstance.get<ApiResponse>("/orders", { params });
+  return mockResponse({ orders: mockOrders });
 };
 
 export const createOrder = async (orderData: CreateOrderData): Promise<ApiResponse> => {
-  return axiosInstance.post<ApiResponse, ApiResponse>("/orders", orderData);
+  // PRODUCTION: return axiosInstance.post<ApiResponse>("/orders", orderData);
+  const order = {
+    id: ++mockOrderIdCounter,
+    status: "pending",
+    payment_status: orderData.payment_method === "cash" ? "pending" : "paid",
+    ...orderData,
+    created_at: new Date().toISOString(),
+  };
+  return mockResponse({ order }, "Order placed (demo mode — no real order was sent to a kitchen)");
 };
 
-/**
- * Preview promotional discount (pickup / first delivery) before placing order.
- * Requires Bearer auth. Server is source of truth; use for display only.
- */
 export const previewPromoDiscount = async (body: PreviewPromoDiscountBody): Promise<ApiResponse> => {
-  return axiosInstance.post<ApiResponse, ApiResponse>("/orders/promo-discount-preview", body);
+  // PRODUCTION: return axiosInstance.post<ApiResponse>("/orders/promo-discount-preview", body);
+  return mockResponse({ has_promo_discount: false, total_after_promo_discount: body.subtotal, discount_amount: 0 });
 };
 
 export const getOrderById = async (orderId: string | number): Promise<ApiResponse> => {
-  return axiosInstance.get<ApiResponse, ApiResponse>(`/orders/${orderId}`);
+  // PRODUCTION: return axiosInstance.get<ApiResponse>(`/orders/${orderId}`);
+  const order = findMockOrderById(orderId) ?? mockOrders[0];
+  return mockResponse({ order });
 };
 
-export const cancelOrder = async (
-  orderId: string | number,
-  cancelData: CancelOrderData
-): Promise<ApiResponse> => {
-  return axiosInstance.put<ApiResponse, ApiResponse>(`/orders/${orderId}/cancel`, cancelData);
+export const cancelOrder = async (orderId: string | number, cancelData: CancelOrderData): Promise<ApiResponse> => {
+  // PRODUCTION: return axiosInstance.put<ApiResponse>(`/orders/${orderId}/cancel`, cancelData);
+  const order = findMockOrderById(orderId);
+  if (!order) return mockError("Order not found");
+  return mockResponse({ order: { ...order, status: "cancelled", cancel_reason: cancelData.reason } }, "Order cancelled (demo mode)");
 };
 
-export const getAvailableCoupons = async (orderData: AvailableCouponsOrderData): Promise<ApiResponse> => {
-  return axiosInstance.post<ApiResponse, ApiResponse>("/orders/available-coupons", orderData);
+export const getAvailableCoupons = async (_orderData: AvailableCouponsOrderData): Promise<ApiResponse> => {
+  // PRODUCTION: return axiosInstance.post<ApiResponse>("/orders/available-coupons", orderData);
+  return mockResponse({ coupons: [] });
 };
 
-/**
- * Reorder a previous order. Response `data.items` carries menu_item_id, size_id,
- * quantity, special_instructions, and selected_* customization arrays; `data.missing_items`
- * lists items no longer available. See REORDER_API_SPECIFICATION.md for the full backend contract.
- */
 export const reorderOrder = async (orderId: string | number): Promise<ApiResponse> => {
-  return axiosInstance.post<ApiResponse, ApiResponse>(`/orders/${orderId}/reorder`);
+  // PRODUCTION: return axiosInstance.post<ApiResponse>(`/orders/${orderId}/reorder`);
+  const order = findMockOrderById(orderId);
+  if (!order) return mockError("Order not found");
+  const items = order.order_items.map((item) => ({
+    menu_item_id: item.menu_item_id,
+    size_id: null,
+    quantity: item.quantity,
+    special_instructions: null,
+    selected_ingredients: null,
+    selected_options: null,
+  }));
+  return mockResponse({ items, missing_items: [] });
 };
 
 const ordersAPI = {

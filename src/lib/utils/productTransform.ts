@@ -322,6 +322,15 @@ export const transformCustomizations = (
 const getImageUrl = (menuItem: RawMenuItem): string => {
   let imageUrl: string | null = null;
 
+  // Local static asset (this demo build's mock fixtures point straight at
+  // /public/img/...) — served as-is, no proxying needed.
+  // PRODUCTION: once a real backend is wired up, its `image`/`image_url`
+  // fields hold backend-relative paths instead, which the branches below
+  // resolve into a full storage URL and route through the CORS image proxy.
+  if (menuItem.image_url?.startsWith('/img/') || menuItem.image?.startsWith('/img/')) {
+    return (menuItem.image_url || menuItem.image) as string;
+  }
+
   // API provides image_url as full URL
   if (menuItem.image_url) {
     imageUrl = menuItem.image_url;

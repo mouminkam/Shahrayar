@@ -1,9 +1,9 @@
 /**
- * Payments API endpoints
- * Handles Stripe payment processing
+ * Payments API — mocked for this portfolio build. Stripe is never actually
+ * charged here; PRODUCTION would call `axiosInstance` against `/payments/*`
+ * and a real Stripe secret key on the backend.
  */
-
-import axiosInstance from "./config/axios";
+import { mockResponse } from "../mocks/mockClient";
 import type { ApiResponse } from "./types";
 
 export interface StripeConfigData {
@@ -12,32 +12,29 @@ export interface StripeConfigData {
 }
 
 export const getStripeConfig = async (): Promise<ApiResponse<StripeConfigData>> => {
-  return axiosInstance.get<ApiResponse<StripeConfigData>, ApiResponse<StripeConfigData>>(
-    "/payments/stripe/config"
-  );
+  // PRODUCTION: return axiosInstance.get<ApiResponse<StripeConfigData>>("/payments/stripe/config");
+  return mockResponse({
+    publishable_key: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
+    currency: "usd",
+  });
 };
 
 export const createStripePaymentIntentWeb = async (orderId: string | number): Promise<ApiResponse> => {
-  return axiosInstance.post<ApiResponse, ApiResponse>("/payments/stripe/web/create-intent", {
-    order_id: orderId,
-  });
+  // PRODUCTION: return axiosInstance.post<ApiResponse>("/payments/stripe/web/create-intent", { order_id: orderId });
+  return mockResponse({
+    client_secret: "",
+    payment_intent_id: `pi_mock_${orderId}`,
+    order_number: `SR-${orderId}`,
+  }, "Card payments are disabled in this demo build — use Cash on Delivery to complete checkout.");
 };
 
 export const confirmStripePaymentWeb = async (
   paymentIntentId: string,
   orderId: string | number,
-  quoteId: string | null = null
+  _quoteId: string | null = null
 ): Promise<ApiResponse> => {
-  const payload: Record<string, unknown> = {
-    payment_intent_id: paymentIntentId,
-    order_id: orderId,
-  };
-
-  if (quoteId) {
-    payload.quote_id = quoteId;
-  }
-
-  return axiosInstance.post<ApiResponse, ApiResponse>("/payments/stripe/web/confirm", payload);
+  // PRODUCTION: return axiosInstance.post<ApiResponse>("/payments/stripe/web/confirm", payload);
+  return mockResponse({ order_id: orderId, payment_intent_id: paymentIntentId, status: "succeeded" });
 };
 
 const paymentsAPI = {
