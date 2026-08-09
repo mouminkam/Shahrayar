@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import Image from "next/image";
 import Link from "@/components/ui/LocalizedLink";
 import OptimizedImage from "../../ui/OptimizedImage";
@@ -10,8 +10,6 @@ import { useInView } from "react-intersection-observer";
 import { useLanguage } from "../../../context/LanguageContext";
 import { t } from "../../../locales/i18n/getTranslation";
 import { transformMenuItemsToProducts } from "../../../lib/utils/productTransform";
-import api from "../../../api";
-import useBranchStore from "../../../store/branchStore";
 import type { Product } from "@/types/shop";
 import type { Locale } from "@/locales/i18n/config";
 
@@ -23,75 +21,17 @@ interface PopularDishesProps {
 export default function PopularDishes({ rawPopularData = null, lang: serverLang = null }: PopularDishesProps) {
   const { prefetchRoute } = usePrefetchRoute();
   const { lang: clientLang } = useLanguage();
-  const { getSelectedBranchId } = useBranchStore();
-  const [lang, setLang] = useState(serverLang || clientLang || 'bg');
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [dishesData, setDishesData] = useState<unknown[] | null>(rawPopularData);
-  const prevLangRef = useRef(serverLang);
 
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (isHydrated && clientLang) {
-      setLang(clientLang);
-    }
-  }, [clientLang, isHydrated]);
-
-  // Update dishesData when rawPopularData changes (from server)
-  useEffect(() => {
-    if (rawPopularData) {
-      setDishesData(rawPopularData);
-    }
-  }, [rawPopularData]);
-
-  // Re-fetch data when language changes after hydration
-  useEffect(() => {
-    if (!isHydrated || !clientLang) {
-      // Initialize prevLangRef on first render
-      if (clientLang) {
-        prevLangRef.current = clientLang;
-      }
-      return;
-    }
-
-    // Only re-fetch if language actually changed (not initial render)
-    if (prevLangRef.current && prevLangRef.current !== clientLang) {
-      const fetchPopularDishes = async () => {
-        const branchId = getSelectedBranchId();
-        if (!branchId) {
-          prevLangRef.current = clientLang;
-          return;
-        }
-
-        try {
-          const response = await api.menu.getHighlights({ branch_id: branchId });
-          if (response?.success && response.data) {
-            setDishesData((response.data.popular as any[]) || []);
-          }
-        } catch (error) {
-          console.error('Error fetching popular dishes:', error);
-        } finally {
-          // Update prevLangRef after fetch completes
-          prevLangRef.current = clientLang;
-        }
-      };
-
-      fetchPopularDishes();
-    } else if (!prevLangRef.current) {
-      // Initialize on first render
-      prevLangRef.current = clientLang;
-    }
-  }, [isHydrated, clientLang, getSelectedBranchId]);
+  // Content is static and localized by the transform below. Switching language
+  // navigates to a different locale route, which re-renders this with new
+  // props — so there's nothing to refetch and no hydration dance to manage.
+  const lang = serverLang || clientLang;
 
   // Transform popular dishes based on current language
   const dishes: Product[] = useMemo(() => {
-    if (!dishesData || !Array.isArray(dishesData)) return [];
-    return transformMenuItemsToProducts(dishesData as any, lang);
-  }, [dishesData, lang]);
-
-  const isLoading = !dishesData || (Array.isArray(dishesData) && dishesData.length === 0);
+    if (!Array.isArray(rawPopularData)) return [];
+    return transformMenuItemsToProducts(rawPopularData as never, lang);
+  }, [rawPopularData, lang]);
 
   return (
     <section className="popular-dishes-section py-10 sm:py-16 md:py-20 lg:py-24 relative overflow-hidden">
@@ -106,11 +46,7 @@ export default function PopularDishes({ rawPopularData = null, lang: serverLang 
             </div>
           </div>
 
-          {isLoading ? (
-            <div className="dishes-card-wrap style1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              <ProductCardSkeleton viewMode="grid" count={3} />
-            </div>
-          ) : !dishes || dishes.length === 0 ? (
+          {!dishes || dishes.length === 0 ? (
             <div className="flex items-center justify-center py-20">
               <p className="text-text text-lg">{t(lang, "no_popular_dishes_available")}</p>
             </div>

@@ -1,117 +1,85 @@
-// MODIFIED: Phase C — Page Splitting
-import { Suspense } from "react";
-import dynamic from "next/dynamic";
 import AnimatedSection from "../../../components/ui/AnimatedSection";
 import ErrorBoundary from "../../../components/ui/ErrorBoundary";
-import SectionSkeleton from "../../../components/ui/SectionSkeleton";
 import type { Locale } from "../../../locales/i18n/config";
+import LatestItemsSection from "../../../components/pages/home/LatestItemsSection";
+import OfferCards from "../../../components/pages/about-us/OfferCards";
+import AboutUsSection from "../../../components/pages/home/AboutUsSection";
+import PopularDishes from "../../../components/pages/shop/PopularDishes";
+import FoodMenuSection from "../../../components/pages/home/FoodMenuSection";
+import ChefSpecialSection from "../../../components/pages/home/ChefSpecialSection";
+import ChefeSection from "../../../components/pages/about-us/ChefeSection";
 
-const LatestItemsSection = dynamic(() => import("../../../components/pages/home/LatestItemsSection"), {
-  loading: () => <SectionSkeleton variant="slider" cardCount={4} height="h-80" />,
-});
+/**
+ * Below-the-fold home sections.
+ *
+ * These are plain static imports on purpose. An earlier revision loaded each
+ * section with next/dynamic, which — because dynamic() wraps its target in a
+ * Suspense boundary — made the server flush an *empty* shell and stream the
+ * real markup in afterwards. For a page whose content is fully static that
+ * trades away the main benefit of prerendering: the HTML is meaningful the
+ * instant it arrives. Next.js already code-splits per route, so plain imports
+ * give a smaller critical path here, not a bigger one.
+ */
 
-const OfferCards = dynamic(() => import("../../../components/pages/about-us/OfferCards"), {
-  loading: () => <SectionSkeleton variant="default" cardCount={3} height="h-80" />,
-});
-
-const AboutUsSection = dynamic(() => import("../../../components/pages/home/AboutUsSection"), {
-  loading: () => <SectionSkeleton variant="default" showCards={false} height="h-64" />,
-});
-
-const PopularDishes = dynamic(() => import("../../../components/pages/shop/PopularDishes"), {
-  loading: () => <SectionSkeleton variant="grid" cardCount={5} height="h-96" />,
-});
-
-const FoodMenuSection = dynamic(() => import("../../../components/pages/home/FoodMenuSection"), {
-  loading: () => <SectionSkeleton variant="default" cardCount={10} height="h-96" />,
-});
-
-const ChefSpecialSection = dynamic(() => import("../../../components/pages/home/ChefSpecialSection"), {
-  loading: () => <SectionSkeleton variant="grid" cardCount={3} height="h-96" />,
-});
-
-const ChefeSection = dynamic(() => import("../../../components/pages/about-us/ChefeSection"), {
-  loading: () => <SectionSkeleton variant="grid" cardCount={3} height="h-96" />,
-});
-
-interface Highlights {
+interface HomeSecondarySectionsProps {
   popular: unknown[];
   latest: unknown[];
   chefSpecial: unknown[];
-}
-
-interface HomeSecondarySectionsProps {
-  slidesPromise: Promise<unknown[]>;
-  highlightsPromise: Promise<Highlights>;
-  chefsPromise: Promise<unknown[]>;
+  chefs: unknown[];
+  slides: unknown[];
   lang: Locale;
 }
 
-export default async function HomeSecondarySections({
-  slidesPromise,
-  highlightsPromise,
-  chefsPromise,
+export default function HomeSecondarySections({
+  popular,
+  latest,
+  chefSpecial,
+  chefs,
+  slides,
   lang,
 }: HomeSecondarySectionsProps) {
-  const [slides, highlights, chefs] = await Promise.all([slidesPromise, highlightsPromise, chefsPromise]);
-
   return (
     <>
       <ErrorBoundary>
-        <Suspense fallback={<SectionSkeleton variant="slider" cardCount={4} height="h-80" />}>
-          <AnimatedSection>
-            <LatestItemsSection rawLatestData={highlights.latest} lang={lang} />
-          </AnimatedSection>
-        </Suspense>
+        <AnimatedSection>
+          <LatestItemsSection rawLatestData={latest} lang={lang} />
+        </AnimatedSection>
       </ErrorBoundary>
 
       <ErrorBoundary>
-        <Suspense fallback={<SectionSkeleton variant="default" cardCount={3} height="h-80" />}>
-          <AnimatedSection>
-            <OfferCards slides={slides as never} lang={lang} />
-          </AnimatedSection>
-        </Suspense>
+        <AnimatedSection>
+          <OfferCards slides={slides as never} lang={lang} />
+        </AnimatedSection>
       </ErrorBoundary>
 
       <ErrorBoundary>
-        <Suspense fallback={<SectionSkeleton variant="default" showCards={false} height="h-64" />}>
-          <AnimatedSection>
-            <AboutUsSection lang={lang} />
-          </AnimatedSection>
-        </Suspense>
+        <AnimatedSection>
+          <AboutUsSection lang={lang} />
+        </AnimatedSection>
       </ErrorBoundary>
 
       <ErrorBoundary>
-        <Suspense fallback={<SectionSkeleton variant="grid" cardCount={5} height="h-96" />}>
-          <AnimatedSection>
-            <PopularDishes rawPopularData={highlights.popular} lang={lang} />
-          </AnimatedSection>
-        </Suspense>
+        <AnimatedSection>
+          <PopularDishes rawPopularData={popular} lang={lang} />
+        </AnimatedSection>
       </ErrorBoundary>
 
       <ErrorBoundary>
-        <Suspense fallback={<SectionSkeleton variant="default" cardCount={10} height="h-96" />}>
-          <AnimatedSection>
-            <FoodMenuSection lang={lang} />
-          </AnimatedSection>
-        </Suspense>
+        <AnimatedSection>
+          <FoodMenuSection lang={lang} />
+        </AnimatedSection>
       </ErrorBoundary>
 
       <ErrorBoundary>
-        <Suspense fallback={<SectionSkeleton variant="grid" cardCount={3} height="h-96" />}>
-          <AnimatedSection>
-            <ChefSpecialSection rawChefSpecialData={highlights.chefSpecial} lang={lang} />
-          </AnimatedSection>
-        </Suspense>
+        <AnimatedSection>
+          <ChefSpecialSection rawChefSpecialData={chefSpecial} lang={lang} />
+        </AnimatedSection>
       </ErrorBoundary>
 
       <ErrorBoundary>
-        <Suspense fallback={<SectionSkeleton variant="grid" cardCount={3} height="h-96" />}>
-          <AnimatedSection>
-            {/* chefsPromise resolves to the raw API array; ChefeSection narrows/validates its own shape */}
-            <ChefeSection chefs={chefs as any} lang={lang} />
-          </AnimatedSection>
-        </Suspense>
+        <AnimatedSection>
+          <ChefeSection chefs={chefs as never} lang={lang} />
+        </AnimatedSection>
       </ErrorBoundary>
     </>
   );

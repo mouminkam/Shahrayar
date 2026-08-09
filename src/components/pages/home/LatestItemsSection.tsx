@@ -8,10 +8,8 @@ import ProductCardSkeleton from "../../ui/ProductCardSkeleton";
 import { useInView } from "react-intersection-observer";
 import { useLanguage } from "../../../context/LanguageContext";
 import { t } from "../../../locales/i18n/getTranslation";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { transformMenuItemsToProducts } from "../../../lib/utils/productTransform";
-import api from "../../../api";
-import useBranchStore from "../../../store/branchStore";
 import type { Locale } from "@/locales/i18n/config";
 import type { Product } from "@/types/shop";
 
@@ -23,73 +21,16 @@ interface LatestItemsSectionProps {
 export default function LatestItemsSection({ rawLatestData = null, lang: serverLang = null }: LatestItemsSectionProps) {
   const { prefetchRoute } = usePrefetchRoute();
   const { lang: clientLang } = useLanguage();
-  const { getSelectedBranchId } = useBranchStore();
-  const [lang, setLang] = useState<string>(serverLang || clientLang || "bg");
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [latestData, setLatestData] = useState<unknown[] | null>(rawLatestData);
-  const prevLangRef = useRef(serverLang);
 
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
+  // Content is static and localized by the transform below. Switching language
+  // navigates to a different locale route, which re-renders this with new
+  // props — so there's nothing to refetch and no hydration dance to manage.
+  const lang = serverLang || clientLang;
 
-  useEffect(() => {
-    if (isHydrated && clientLang) {
-      setLang(clientLang);
-    }
-  }, [clientLang, isHydrated]);
-
-  // Update latestData when rawLatestData changes (from server)
-  useEffect(() => {
-    if (rawLatestData) {
-      setLatestData(rawLatestData);
-    }
-  }, [rawLatestData]);
-
-  // Re-fetch data when language changes after hydration
-  useEffect(() => {
-    if (!isHydrated || !clientLang) {
-      // Initialize prevLangRef on first render
-      if (clientLang) {
-        prevLangRef.current = clientLang;
-      }
-      return;
-    }
-
-    // Only re-fetch if language actually changed (not initial render)
-    if (prevLangRef.current && prevLangRef.current !== clientLang) {
-      const fetchLatestItems = async () => {
-        const branchId = getSelectedBranchId();
-        if (!branchId) {
-          prevLangRef.current = clientLang;
-          return;
-        }
-
-        try {
-          const response = await api.menu.getHighlights({ branch_id: branchId });
-          if (response?.success && response.data) {
-            setLatestData((response.data.latest as any[]) || []);
-          }
-        } catch (error) {
-          console.error("Error fetching latest items:", error);
-        } finally {
-          // Update prevLangRef after fetch completes
-          prevLangRef.current = clientLang;
-        }
-      };
-
-      fetchLatestItems();
-    } else if (!prevLangRef.current) {
-      // Initialize on first render
-      prevLangRef.current = clientLang;
-    }
-  }, [isHydrated, clientLang, getSelectedBranchId]);
-
-  // Transform latest items based on current language
   const latest: Product[] = useMemo(() => {
-    if (!latestData || !Array.isArray(latestData)) return [];
-    return transformMenuItemsToProducts(latestData as any, lang);
-  }, [latestData, lang]);
+    if (!Array.isArray(rawLatestData)) return [];
+    return transformMenuItemsToProducts(rawLatestData as never, lang);
+  }, [rawLatestData, lang]);
 
   // Always render something to maintain hook order consistency
   // Return empty section instead of null to avoid hooks order issues

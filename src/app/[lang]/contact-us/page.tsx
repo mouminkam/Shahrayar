@@ -1,92 +1,44 @@
-// MODIFIED: Phase C — Page Splitting
-import { Suspense } from "react";
-import { unstable_cache } from "next/cache";
 import type { Metadata } from "next";
 import ErrorBoundary from "../../../components/ui/ErrorBoundary";
-import SectionSkeleton from "../../../components/ui/SectionSkeleton";
 import Breadcrumb from "../../../components/ui/Breadcrumb";
-import { getLanguage } from "../../../lib/getLanguage";
-import { getAuthToken } from "../../../lib/getAuthToken";
-import { fetchDefaultBranch, type Branch } from "../../../lib/fetchDefaultBranch";
 import { t } from "../../../locales/i18n/getTranslation";
-import { createServerAxios } from "../../../api/config/serverAxios";
-import ContactHeroStream from "./_components/ContactHeroStream";
-import ContactSecondarySections from "./_components/ContactSecondarySections";
+import { i18n, type Locale } from "../../../locales/i18n/config";
+import { defaultBranch } from "../../../content/restaurant";
+import ContactSections from "./_components/ContactSections";
 
-const getDefaultBranchCached = unstable_cache(
-  async (lang: string) => fetchDefaultBranch(lang, null),
-  ["contact-default-branch"],
-  { revalidate: 300 }
-);
+/**
+ * Contact — a fully static Server Component. Branch details are static
+ * content, so there's nothing to fetch or await.
+ */
 
-async function fetchBranchDetails(branchId: string | number | undefined, lang: string, token: string | null): Promise<Branch | null> {
-  if (!branchId) return null;
-  try {
-    const serverAxios = await createServerAxios({ language: lang, token });
-    const response = await serverAxios.get(`/branches/${branchId}`);
-    return response?.data?.success ? response.data.data?.branch : null;
-  } catch (error) {
-    console.error("Error fetching branch details:", error);
-    return null;
-  }
+interface ContactPageProps {
+  params: Promise<{ lang: string }>;
 }
 
-const getBranchDetailsCached = unstable_cache(
-  async (branchId: string, lang: string) => fetchBranchDetails(branchId, lang, null),
-  ["contact-branch-details"],
-  { revalidate: 300 }
-);
+function resolveLocale(raw: string): Locale {
+  return (i18n.locales as readonly string[]).includes(raw) ? (raw as Locale) : i18n.defaultLocale;
+}
 
-export async function generateMetadata(): Promise<Metadata> {
-  const lang = await getLanguage();
+export async function generateMetadata({ params }: ContactPageProps): Promise<Metadata> {
+  const { lang: rawLang } = await params;
+  const lang = resolveLocale(rawLang);
   return {
     title: t(lang, "contact_us"),
-    description: "Contact Shahrayar Restaurant",
+    description: "Find a Shahrayar table, call the kitchen, or send us a message.",
     keywords: [t(lang, "contact_us")],
   };
 }
 
-export const revalidate = 300;
-
-export default async function ContactPage() {
-  const lang = await getLanguage();
-  const token = await getAuthToken();
-
-  const defaultBranch: Branch | null = token
-    ? await fetchDefaultBranch(lang, token)
-    : await getDefaultBranchCached(lang);
-  const branchId = defaultBranch?.id || defaultBranch?.branch_id;
-
-  const branchDetailsPromise = token
-    ? fetchBranchDetails(branchId, lang, token)
-    : getBranchDetailsCached(branchId as string, lang);
+export default async function ContactPage({ params }: ContactPageProps) {
+  const { lang: rawLang } = await params;
+  const lang = resolveLocale(rawLang);
 
   return (
     <div className="bg-bg3 min-h-screen">
       <Breadcrumb title={t(lang, "contact_us")} />
 
-      {/* ===== MAIN SECTION — renders immediately ===== */}
-      <Suspense
-        fallback={
-          <SectionSkeleton variant="grid" cardCount={3} height="h-64" />
-        }
-      >
-        <ContactHeroStream
-          branchDetailsPromise={branchDetailsPromise}
-          lang={lang}
-        />
-      </Suspense>
-
-      {/* ===== SECONDARY SECTION — deferred via Suspense ===== */}
       <ErrorBoundary>
-        <Suspense
-          fallback={<SectionSkeleton variant="default" height="h-screen" />}
-        >
-          <ContactSecondarySections
-            branchDetailsPromise={branchDetailsPromise}
-            lang={lang}
-          />
-        </Suspense>
+        <ContactSections branch={defaultBranch} lang={lang} />
       </ErrorBoundary>
     </div>
   );

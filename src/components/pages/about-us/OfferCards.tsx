@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo } from "react";
 import OptimizedImage from "../../ui/OptimizedImage";
 import LocalizedLink from "../../ui/LocalizedLink";
 import { ArrowRight } from "lucide-react";
@@ -7,8 +7,7 @@ import { motion } from "framer-motion";
 import { useLanguage } from "../../../context/LanguageContext";
 import { t } from "../../../locales/i18n/getTranslation";
 import { getProxiedImageUrl } from "../../../lib/utils/imageProxy";
-import api from "../../../api";
-import useBranchStore from "../../../store/branchStore";
+import { getLocalizedField } from "../../../lib/utils/productTransform";
 import type { Locale } from "../../../locales/i18n/config";
 
 interface Slide {
@@ -35,71 +34,15 @@ interface OfferCardsProps {
 
 export default function OfferCards({ slides: apiSlides = [], lang: serverLang = null }: OfferCardsProps) {
   const { lang: clientLang } = useLanguage();
-  const { getSelectedBranchId } = useBranchStore();
-  const [lang, setLang] = useState<Locale | string>(serverLang || clientLang || "bg");
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [slidesData, setSlidesData] = useState<Slide[]>(apiSlides);
-  const prevLangRef = useRef(serverLang);
 
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (isHydrated && clientLang) {
-      setLang(clientLang);
-    }
-  }, [clientLang, isHydrated]);
-
-  // Update slidesData when apiSlides changes (from server)
-  useEffect(() => {
-    if (apiSlides) {
-      setSlidesData(apiSlides);
-    }
-  }, [apiSlides]);
-
-  // Re-fetch data when language changes after hydration
-  useEffect(() => {
-    if (!isHydrated || !clientLang) {
-      // Initialize prevLangRef on first render
-      if (clientLang) {
-        prevLangRef.current = clientLang;
-      }
-      return;
-    }
-
-    // Only re-fetch if language actually changed (not initial render)
-    if (prevLangRef.current && prevLangRef.current !== clientLang) {
-      const fetchSlides = async () => {
-        const branchId = getSelectedBranchId();
-        if (!branchId) {
-          prevLangRef.current = clientLang;
-          return;
-        }
-
-        try {
-          const response = await api.slides.getWebsiteSlides({ branch_id: branchId });
-          if (response?.success && response.data) {
-            setSlidesData((response.data.slides as any[]) || []);
-          }
-        } catch (error) {
-          console.error("Error fetching website slides:", error);
-        } finally {
-          // Update prevLangRef after fetch completes
-          prevLangRef.current = clientLang;
-        }
-      };
-
-      fetchSlides();
-    } else if (!prevLangRef.current) {
-      // Initialize on first render
-      prevLangRef.current = clientLang;
-    }
-  }, [isHydrated, clientLang, getSelectedBranchId]);
+  // Content is static and localized by the transform below. Switching language
+  // navigates to a different locale route, which re-renders this with new
+  // props — so there's nothing to refetch and no hydration dance to manage.
+  const lang = serverLang || clientLang;
 
   // Take first 3 slides and map to offer format
   const offers: Offer[] = useMemo(() => {
-    if (!slidesData || slidesData.length === 0) {
+    if (!apiSlides || apiSlides.length === 0) {
       // Fallback offers if no data
       return [
         {
@@ -130,15 +73,15 @@ export default function OfferCards({ slides: apiSlides = [], lang: serverLang = 
     }
 
     // Take first 3 slides only
-    return slidesData.slice(0, 3).map((slide) => ({
-      title: slide.title || "",
+    return apiSlides.slice(0, 3).map((slide) => ({
+      title: getLocalizedField(slide, "title", lang) || slide.title || "",
       subtitle: t(lang, "on_this_week"),
-      description: slide.description || t(lang, "limited_time_offer"),
+      description: getLocalizedField(slide, "description", lang) || slide.description || t(lang, "limited_time_offer"),
       image: getProxiedImageUrl(slide.desktop_image || "/img/offer/offerThumb1_1.png") || "/img/offer/offerThumb1_1.png",
       bgImage: "/img/bg/offerBG1_1.jpg",
       link: slide.menu_item_id ? `/shop/${slide.menu_item_id}` : "/shop",
     }));
-  }, [slidesData, lang]);
+  }, [apiSlides, lang]);
 
   // Show error state or fallback
   if (offers.length === 0) {

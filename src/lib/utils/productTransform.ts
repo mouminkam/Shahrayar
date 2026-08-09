@@ -247,11 +247,11 @@ export const getLocalizedField = (
 ): string => {
   if (!obj) return '';
 
-  // Map language codes to field suffixes
+  // Map language codes to field suffixes (matches i18n.locales)
   const langMap: Record<string, string> = {
     en: 'en',
     bg: 'bg',
-    // 'ar': 'ar' - not needed per requirements
+    ar: 'ar',
   };
 
   const suffix = langMap[lang];

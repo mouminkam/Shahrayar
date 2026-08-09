@@ -1,72 +1,71 @@
 "use client";
-import { useEffect, useState, type ReactNode } from "react";
-import { motion, useAnimation } from "framer-motion";
-import { useInView } from "react-intersection-observer";
+import { useEffect, useRef, type ReactNode } from "react";
 
 interface AnimatedSectionProps {
   children: ReactNode;
-  /** Animation duration in seconds (default: 0.8) */
+  /** Reveal delay in ms, for staggering sibling sections. */
+  delay?: number;
+  /** Kept for API compatibility with existing call sites. */
   duration?: number;
-  /** If true, shows content immediately on mobile without animation delay */
   mobileOptimized?: boolean;
 }
 
-// AnimatedSection Wrapper Component
-// Provides smooth scroll-triggered animations for sections
-const AnimatedSection = ({ children, duration = 0.8, mobileOptimized = true }: AnimatedSectionProps) => {
-  const [isMobile, setIsMobile] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  const controls = useAnimation();
-  const [ref, inView] = useInView({
-    triggerOnce: true, // Trigger once for better performance
-    threshold: 0.05, // Lower threshold for mobile
-    rootMargin: mobileOptimized ? "200px 0px 0px 0px" : "0px 0px -50px 0px", // Larger margin on mobile
-  });
+/**
+ * Scroll reveal wrapper — fail-safe by design.
+ *
+ * The server-rendered markup is fully visible: the hidden state is applied by
+ * this effect, on the client, at the same moment the observer starts watching.
+ * So if JS is slow, blocked, or IntersectionObserver is unavailable, the
+ * content simply shows — it can never get stranded at opacity 0. A timeout
+ * backstop covers the case where the observer exists but never fires.
+ *
+ * Implemented with a CSS transition rather than a motion library: section
+ * reveals are the most-repeated animation on the page, and this keeps them off
+ * the JS main thread and out of the bundle.
+ */
+const AnimatedSection = ({ children, delay = 0 }: AnimatedSectionProps) => {
+  const ref = useRef<HTMLDivElement>(null);
 
-  // Mark as mounted after first render
   useEffect(() => {
-    setIsMounted(true);
+    const el = ref.current;
+    if (!el) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (typeof IntersectionObserver === "undefined") return;
+
+    // Already on screen at mount (above the fold): leave it visible rather
+    // than hiding it just to fade it straight back in.
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.9) return;
+
+    el.classList.add("reveal-init");
+
+    const reveal = () => {
+      el.classList.add("reveal-in");
+      observer.disconnect();
+      clearTimeout(backstop);
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) reveal();
+      },
+      { rootMargin: "0px 0px -60px 0px", threshold: 0 }
+    );
+
+    observer.observe(el);
+    const backstop = setTimeout(reveal, 2000);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(backstop);
+    };
   }, []);
 
-  // Detect mobile on mount
-  useEffect(() => {
-    if (!isMounted) return;
-
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, [isMounted]);
-
-  useEffect(() => {
-    if (inView && isMounted) {
-      // On mobile, animate faster and ensure visibility
-      const animDuration = isMobile && mobileOptimized ? duration * 0.6 : duration;
-      controls.start({
-        x: 0,
-        opacity: 1,
-        transition: { duration: animDuration, ease: "easeOut" },
-      });
-    } else if (!mobileOptimized && isMounted) {
-      // Only animate out on desktop if not mobile optimized
-      controls.start({
-        x: -100,
-        opacity: 0,
-        transition: { duration: duration * 0.6, ease: "easeInOut" },
-      });
-    }
-  }, [controls, inView, duration, isMobile, mobileOptimized, isMounted]);
-
-  // Always start hidden to avoid hydration mismatch
-  // State will be updated via controls.start() in useEffect
-  const initialState = { x: -100, opacity: 0 };
-
   return (
-    <motion.div ref={ref} animate={controls} initial={initialState}>
+    <div ref={ref} style={delay ? { transitionDelay: `${delay}ms` } : undefined}>
       {children}
-    </motion.div>
+    </div>
   );
 };
 

@@ -28,6 +28,16 @@ const nextConfig: NextConfig = {
     contentDispositionType: 'attachment' as const,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
+  // Locale entry point. Handled here at the routing layer (not by a React
+  // page) so it costs nothing to render and can't produce nested <html> —
+  // src/app/[lang]/layout.tsx is the one and only root layout.
+  // proxy.ts still performs smarter, cookie/Accept-Language-aware routing
+  // when the edge runtime is available; this is the guaranteed baseline.
+  async redirects() {
+    return [
+      { source: '/', destination: '/en', permanent: false },
+    ];
+  },
   // PHASE-A FIX [H3]: HTTP security headers on all routes
   async headers() {
     return [

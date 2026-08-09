@@ -1,13 +1,12 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useMemo } from "react";
 import { useLanguage } from "../../../context/LanguageContext";
 import { t } from "../../../locales/i18n/getTranslation";
 import OptimizedImage from "../../ui/OptimizedImage";
 import ProductCardSkeleton from "../../ui/ProductCardSkeleton";
 import { useInView } from "react-intersection-observer";
 import { getProxiedImageUrl } from "../../../lib/utils/imageProxy";
-import api from "../../../api";
-import useBranchStore from "../../../store/branchStore";
+import { getLocalizedField } from "../../../lib/utils/productTransform";
 import type { Locale } from "../../../locales/i18n/config";
 
 export interface Chef {
@@ -25,67 +24,19 @@ interface ChefeSectionProps {
 
 export default function ChefeSection({ chefs: serverChefs = [], lang: serverLang = null }: ChefeSectionProps) {
   const { lang: clientLang } = useLanguage();
-  const { getSelectedBranchId } = useBranchStore();
-  const [lang, setLang] = useState<Locale | string>(serverLang || clientLang || "bg");
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [chefsData, setChefsData] = useState<Chef[]>(serverChefs);
-  const prevLangRef = useRef(serverLang);
 
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
+  // Content is static and localized by the transform below. Switching language
+  // navigates to a different locale route, which re-renders this with new
+  // props — so there's nothing to refetch and no hydration dance to manage.
+  const lang = serverLang || clientLang;
 
-  useEffect(() => {
-    if (isHydrated && clientLang) {
-      setLang(clientLang);
-    }
-  }, [clientLang, isHydrated]);
-
-  // Update chefsData when serverChefs changes (from server)
-  useEffect(() => {
-    if (serverChefs) {
-      setChefsData(serverChefs);
-    }
-  }, [serverChefs]);
-
-  // Re-fetch data when language changes after hydration
-  useEffect(() => {
-    if (!isHydrated || !clientLang) {
-      // Initialize prevLangRef on first render
-      if (clientLang) {
-        prevLangRef.current = clientLang;
-      }
-      return;
-    }
-
-    // Only re-fetch if language actually changed (not initial render)
-    if (prevLangRef.current && prevLangRef.current !== clientLang) {
-      const fetchChefs = async () => {
-        const branchId = getSelectedBranchId();
-        if (!branchId) {
-          prevLangRef.current = clientLang;
-          return;
-        }
-
-        try {
-          const response = await api.branches.getChefs(branchId);
-          if (response?.success && response.data) {
-            setChefsData((response.data.chefs as Chef[]) || []);
-          }
-        } catch (error) {
-          console.error("Error fetching chefs:", error);
-        } finally {
-          // Update prevLangRef after fetch completes
-          prevLangRef.current = clientLang;
-        }
-      };
-
-      fetchChefs();
-    } else if (!prevLangRef.current) {
-      // Initialize on first render
-      prevLangRef.current = clientLang;
-    }
-  }, [isHydrated, clientLang, getSelectedBranchId]);
+  const chefsData: Chef[] = useMemo(() => {
+    if (!Array.isArray(serverChefs)) return [];
+    return serverChefs.map((chef) => ({
+      ...chef,
+      bio: getLocalizedField(chef as Record<string, unknown>, "bio", lang) || chef.bio,
+    }));
+  }, [serverChefs, lang]);
 
   // Get image URL with proxy support
   const getImageUrl = (imageUrl?: string): string => {

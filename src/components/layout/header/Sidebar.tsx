@@ -1,20 +1,19 @@
 "use client";
-import { useState, useEffect, useMemo, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, type Dispatch, type SetStateAction } from "react";
 import Image from "next/image";
 import LocalizedLink from "../../ui/LocalizedLink";
 import { X, MapPin, Mail, Clock, Phone, ShoppingCart, Languages } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import BranchSelector from "./BranchSelector";
 import LanguageSwitcher from "../LanguageSwitcher";
-import api from "../../../api";
 import useBranchStore from "../../../store/branchStore";
 import { usePrefetchRoute } from "../../../hooks/usePrefetchRoute";
 import { useLocalizedRouter } from "../../../hooks/useLocalizedRouter";
 import { NAV_LINKS } from "../../../data/constants";
 import { useLanguage } from "../../../context/LanguageContext";
 import { t } from "../../../locales/i18n/getTranslation";
-import { transformMenuItemsToProducts, type RawMenuItem } from "../../../lib/utils/productTransform";
-import { useApiCache } from "../../../hooks/useApiCache";
+import { transformMenuItemsToProducts } from "../../../lib/utils/productTransform";
+import { popularItems, latestItems } from "@/content/menu";
 import OptimizedImage from "../../ui/OptimizedImage";
 
 interface NavLink {
@@ -69,7 +68,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const {
     selectedBranch,
     initialize,
-    getSelectedBranchId,
     branchDetails,
     getBranchContactInfo,
     getBranchWorkingHours,
@@ -77,77 +75,16 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   } = useBranchStore();
   const { prefetchRoute } = usePrefetchRoute();
   const { lang } = useLanguage();
-  const { getCachedOrFetch } = useApiCache("HIGHLIGHTS");
 
-  // Lazy load highlights - only fetch when sidebar is opened
-  const [highlightsData, setHighlightsData] = useState<{
-    popular: GalleryDish[];
-    latest: GalleryDish[];
-    chefSpecial: GalleryDish[];
-  }>({
-    popular: [],
-    latest: [],
-    chefSpecial: [],
-  });
-  const [isLoadingHighlights, setIsLoadingHighlights] = useState(false);
-
-  // Fetch highlights only when sidebar is opened
-  useEffect(() => {
-    const fetchHighlights = async () => {
-      if (!isOpen || highlightsData.popular.length > 0 || isLoadingHighlights) {
-        return; // Don't fetch if sidebar is closed, already has data, or is loading
-      }
-
-      const branchId = getSelectedBranchId();
-      if (!branchId) {
-        return;
-      }
-
-      setIsLoadingHighlights(true);
-      try {
-        const response = await getCachedOrFetch(
-          "/menu-items/highlights",
-          {},
-          () => api.menu.getHighlights()
-        );
-
-        const responseData = response?.data as
-          | { popular?: RawMenuItem[]; latest?: RawMenuItem[]; chef_special?: RawMenuItem[] }
-          | undefined;
-
-        if (response?.success && responseData) {
-          const popularItems = transformMenuItemsToProducts(responseData.popular || [], lang);
-          const latestItems = transformMenuItemsToProducts(responseData.latest || [], lang);
-          const chefSpecialItems = transformMenuItemsToProducts(responseData.chef_special || [], lang);
-
-          setHighlightsData({
-            popular: popularItems as unknown as GalleryDish[],
-            latest: latestItems as unknown as GalleryDish[],
-            chefSpecial: chefSpecialItems as unknown as GalleryDish[],
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching highlights:", error);
-        // Keep empty arrays on error
-      } finally {
-        setIsLoadingHighlights(false);
-      }
-    };
-
-    fetchHighlights();
-  }, [isOpen, getSelectedBranchId, getCachedOrFetch, lang, highlightsData.popular.length, isLoadingHighlights]);
-
-  // Get gallery images from highlights API
-  // First 3 from popular, next 3 from latest or chefSpecial
-  const getGalleryImages = (): GalleryDish[] => {
-    const popularImages = (highlightsData.popular || []).slice(0, 3);
-    const otherImages = (highlightsData.latest && highlightsData.latest.length > 0
-      ? highlightsData.latest
-      : highlightsData.chefSpecial || []).slice(0, 3);
-    return [...popularImages, ...otherImages];
-  };
-
-  const galleryImages = getGalleryImages();
+  // Gallery content is static and localized by the transform below. Switching
+  // language navigates to a different locale route, which re-renders this with
+  // the new lang — so there's nothing to fetch and nothing to cache.
+  // First 3 from popular, next 3 from latest.
+  const galleryImages: GalleryDish[] = useMemo(() => {
+    const popularImages = transformMenuItemsToProducts(popularItems, lang).slice(0, 3);
+    const otherImages = transformMenuItemsToProducts(latestItems, lang).slice(0, 3);
+    return [...popularImages, ...otherImages] as unknown as GalleryDish[];
+  }, [lang]);
 
   // Initialize branch if not loaded
   useEffect(() => {
@@ -335,16 +272,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                     transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
                     className="offcanvas-gallery-area hidden xl:block mb-6"
                   >
-                    {isLoadingHighlights ? (
-                      <div className="grid grid-cols-3 gap-2">
-                        {[...Array(6)].map((_, index) => (
-                          <div
-                            key={index}
-                            className="w-[120px] h-[120px] bg-white/10 rounded-lg animate-pulse"
-                          />
-                        ))}
-                      </div>
-                    ) : galleryImages.length > 0 ? (
+                    {galleryImages.length > 0 ? (
                       <>
                     <div className="offcanvas-gallery-items grid grid-cols-3 gap-2 mb-2">
                           {galleryImages.slice(0, 3).map((dish, index) => (

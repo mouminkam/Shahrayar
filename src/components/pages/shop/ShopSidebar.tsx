@@ -1,79 +1,49 @@
 "use client";
-import { memo, useCallback, useState, useEffect } from "react";
+import { memo, useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "@/components/ui/LocalizedLink";
 import { useLocalizedRouter } from "@/hooks/useLocalizedRouter";
 import OptimizedImage from "../../ui/OptimizedImage";
 import { usePrefetchRoute } from "../../../hooks/usePrefetchRoute";
-import { useShopSidebar } from "../../../hooks/useShopSidebar";
 import { formatCurrency } from "../../../lib/utils/formatters";
 import { useLanguage } from "../../../context/LanguageContext";
 import { t } from "../../../locales/i18n/getTranslation";
-import api from "../../../api";
-import useBranchStore from "../../../store/branchStore";
-import { transformMenuItemsToProducts } from "../../../lib/utils/productTransform";
-import { useApiCache } from "../../../hooks/useApiCache";
-import type { Product } from "@/types/shop";
+import {
+  transformCategories,
+  transformMenuItemsToProducts,
+  type RawCategory,
+} from "../../../lib/utils/productTransform";
+import { latestItems } from "../../../content/menu";
 
-const ShopSidebar = memo(function ShopSidebar() {
+interface ShopSidebarProps {
+  categories: RawCategory[];
+}
+
+/**
+ * Shop sidebar. Categories are handed down from the (static) shop page, and the
+ * "recent products" strip reads the same static catalog — both localize
+ * synchronously with the active language, so there is nothing to fetch and no
+ * loading state to render.
+ */
+const ShopSidebar = memo(function ShopSidebar({ categories: rawCategories }: ShopSidebarProps) {
   const { push, replace } = useLocalizedRouter();
   const searchParams = useSearchParams();
   const { prefetchRoute } = usePrefetchRoute();
   const { lang } = useLanguage();
-  const { getSelectedBranchId } = useBranchStore();
-  const { getCachedOrFetch } = useApiCache("HIGHLIGHTS");
 
   const currentCategory = searchParams.get("category");
 
-  // Use custom hook for sidebar data
-  const {
-    categories,
-    isLoadingCategories,
-  } = useShopSidebar();
+  const categories = useMemo(() => transformCategories(rawCategories, lang), [rawCategories, lang]);
+  const recentProducts = useMemo(
+    () => transformMenuItemsToProducts(latestItems.slice(0, 4), lang),
+    [lang]
+  );
 
-  // Lazy load highlights - fetch only latest products for recent products section
-  const [latestProducts, setLatestProducts] = useState<Product[]>([]);
-  const [isLoadingRecent, setIsLoadingRecent] = useState(false);
-
-  // Fetch latest products when component mounts (shop page is already visible)
-  useEffect(() => {
-    const fetchLatest = async () => {
-      const branchId = getSelectedBranchId();
-      if (!branchId || latestProducts.length > 0 || isLoadingRecent) {
-        return;
-      }
-
-      setIsLoadingRecent(true);
-      try {
-        const response = await getCachedOrFetch(
-          "/menu-items/highlights",
-          {},
-          () => api.menu.getHighlights()
-        );
-
-        if (response?.success && response.data) {
-          const latestItems = transformMenuItemsToProducts((response.data.latest as any[]) || [], lang);
-          setLatestProducts(latestItems);
-        }
-      } catch (error) {
-        console.error("Error fetching latest products:", error);
-        setLatestProducts([]);
-      } finally {
-        setIsLoadingRecent(false);
-      }
-    };
-
-    fetchLatest();
-  }, [getSelectedBranchId, getCachedOrFetch, lang, latestProducts.length, isLoadingRecent]);
-
-  const recentProducts = latestProducts || [];
-
-  // Auto-select first category if no category is selected
+  // Land on a category by default so the grid is never empty on first visit.
   useEffect(() => {
     if (!currentCategory && categories.length > 0) {
-      const firstCategoryId = categories[0].id;
       const params = new URLSearchParams(searchParams.toString());
-      params.set("category", String(firstCategoryId));
+      params.set("category", String(categories[0].id));
       replace(`/shop?${params.toString()}`, { scroll: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -101,11 +71,7 @@ const ShopSidebar = memo(function ShopSidebar() {
           {t(lang, "categories")}
           <span className="absolute bottom-0 left-0 h-0.5 w-16 sm:w-20 bg-theme3"></span>
         </h5>
-        {isLoadingCategories ? (
-          <div className="flex items-center justify-center py-4">
-            <p className="text-text text-sm">{t(lang, "loading_categories")}</p>
-          </div>
-        ) : categories.length === 0 ? (
+        {categories.length === 0 ? (
           <p className="text-text text-sm">{t(lang, "no_categories_available")}</p>
         ) : (
           <ul className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -132,11 +98,7 @@ const ShopSidebar = memo(function ShopSidebar() {
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-1 w-16 lg:w-20 bg-linear-to-r from-theme to-theme3 rounded-full"></span>
           </h5>
 
-          {isLoadingRecent ? (
-            <div className="flex items-center justify-center py-4">
-              <p className="text-text text-sm">{t(lang, "loading")}</p>
-            </div>
-          ) : recentProducts.length === 0 ? (
+          {recentProducts.length === 0 ? (
             <p className="text-text text-sm text-center">{t(lang, "no_recent_products")}</p>
           ) : (
             <div className="grid grid-cols-1 gap-4 lg:gap-6 relative z-10">

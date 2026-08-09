@@ -1,162 +1,54 @@
-// MODIFIED: Phase C — Page Splitting
-import { Suspense } from "react";
 import type { Metadata } from "next";
-import { unstable_cache } from "next/cache";
 import ErrorBoundary from "../../components/ui/ErrorBoundary";
-import SectionSkeleton from "../../components/ui/SectionSkeleton";
-import { getAuthToken } from "../../lib/getAuthToken";
-import { fetchDefaultBranch, type Branch } from "../../lib/fetchDefaultBranch";
-import { createServerAxios } from "../../api/config/serverAxios";
 import { i18n, type Locale } from "../../locales/i18n/config";
-import HeroBannerStream from "./_components/HeroBannerStream";
+import { heroSlides, chefs } from "../../content/restaurant";
+import { popularItems, latestItems, chefSpecialItems } from "../../content/menu";
+import HeroBanner from "./_components/HeroBanner";
 import HomeSecondarySections from "./_components/HomeSecondarySections";
 
-interface Highlights {
-  popular: unknown[];
-  latest: unknown[];
-  chefSpecial: unknown[];
-}
-
-const getDefaultBranchCached = unstable_cache(
-  async (lang: string) => fetchDefaultBranch(lang, null),
-  ["home-default-branch"],
-  { revalidate: 300 }
-);
-
-async function fetchWebsiteSlides(branchId: string | undefined, lang: string, token: string | null) {
-  if (!branchId) return [];
-  try {
-    const serverAxios = await createServerAxios({ language: lang, token });
-    const response = await serverAxios.get("/website-slides", {
-      params: { branch_id: branchId },
-    });
-    return response?.data?.success ? response.data.data?.slides || [] : [];
-  } catch (error) {
-    console.error("Error fetching website slides:", error);
-    return [];
-  }
-}
-
-const getWebsiteSlidesCached = unstable_cache(
-  async (branchId: string, lang: string) => fetchWebsiteSlides(branchId, lang, null),
-  ["home-slides"],
-  { revalidate: 300 }
-);
-
-async function fetchHighlights(
-  branchId: string | undefined,
-  lang: string,
-  token: string | null
-): Promise<Highlights> {
-  if (!branchId) return { popular: [], latest: [], chefSpecial: [] };
-  try {
-    const serverAxios = await createServerAxios({ language: lang, token });
-    const response = await serverAxios.get("/menu-items/highlights", {
-      params: { branch_id: branchId },
-    });
-    if (!response?.data?.success || !response.data.data) {
-      return { popular: [], latest: [], chefSpecial: [] };
-    }
-    const data = response.data.data;
-    return {
-      popular: data.popular || [],
-      latest: data.latest || [],
-      chefSpecial: data.chef_special || [],
-    };
-  } catch (error) {
-    console.error("Error fetching highlights:", error);
-    return { popular: [], latest: [], chefSpecial: [] };
-  }
-}
-
-const getHighlightsCached = unstable_cache(
-  async (branchId: string, lang: string) => fetchHighlights(branchId, lang, null),
-  ["home-highlights"],
-  { revalidate: 300 }
-);
-
-async function fetchChefs(branchId: string | undefined, lang: string, token: string | null) {
-  if (!branchId) return [];
-  try {
-    const serverAxios = await createServerAxios({ language: lang, token });
-    const response = await serverAxios.get("/chefs", {
-      params: { branch_id: branchId },
-    });
-    return response?.data?.success ? response.data.data?.chefs || [] : [];
-  } catch (error) {
-    console.error("Error fetching chefs:", error);
-    return [];
-  }
-}
-
-const getChefsCached = unstable_cache(
-  async (branchId: string, lang: string) => fetchChefs(branchId, lang, null),
-  ["home-chefs"],
-  { revalidate: 300 }
-);
+/**
+ * Home — a fully static Server Component.
+ *
+ * All content is a build-time module import (src/content/*), so this page is
+ * prerendered to HTML for every locale and served from the edge with no
+ * server work per request. That's what makes navigation feel instant.
+ *
+ * Deliberately absent: cookies(), headers(), and any awaited data fetch. Each
+ * of those would opt this route out of static generation and force a
+ * server round-trip on every visit. The locale comes from `params`, which is
+ * known at build time via the layout's generateStaticParams().
+ */
 
 export const metadata: Metadata = {
-  title: {
-    absolute: "Shahrayar Restaurant - Authentic Middle Eastern Cuisine",
-  },
+  title: { absolute: "Shahrayar Restaurant — Authentic Middle Eastern Cuisine" },
   description:
-    "Experience authentic Middle Eastern flavors at Shahrayar Restaurant. Fresh ingredients, traditional recipes, and genuine hospitality. Order online for delivery or pickup.",
-  keywords: [
-    "Middle Eastern food",
-    "restaurant",
-    "delivery",
-    "pickup",
-    "authentic cuisine",
-    "Shahrayar",
-  ],
+    "Char-grilled shawarma, wood-fired pizza, and plates built to share. Order online for delivery or pickup.",
 };
 
-export const revalidate = 180;
-
-export default async function HomePage({
-  params,
-}: {
-  params: Promise<{ lang: string }>;
-}) {
+export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang: rawLang } = await params;
   const lang: Locale = (i18n.locales as readonly string[]).includes(rawLang)
     ? (rawLang as Locale)
     : i18n.defaultLocale;
-  const token = await getAuthToken();
-
-  const defaultBranch: Branch | null = token
-    ? await fetchDefaultBranch(lang, token)
-    : await getDefaultBranchCached(lang);
-  const rawBranchId = defaultBranch?.id || defaultBranch?.branch_id;
-  const branchId = rawBranchId != null ? String(rawBranchId) : undefined;
-
-  const slidesPromise = token
-    ? fetchWebsiteSlides(branchId, lang, token)
-    : getWebsiteSlidesCached(branchId as string, lang);
-  const highlightsPromise = token
-    ? fetchHighlights(branchId, lang, token)
-    : getHighlightsCached(branchId as string, lang);
-  const chefsPromise = token
-    ? fetchChefs(branchId, lang, token)
-    : getChefsCached(branchId as string, lang);
 
   return (
     <div className="bg-bg3 min-h-screen">
-      {/* ===== MAIN SECTION — renders immediately ===== */}
-      <Suspense fallback={<SectionSkeleton variant="default" height="h-screen" />}>
-        <HeroBannerStream slidesPromise={slidesPromise} lang={lang} />
-      </Suspense>
-
-      {/* ===== SECONDARY SECTION — deferred via Suspense ===== */}
+      {/* Above the fold — rendered eagerly, no loading state needed. */}
       <ErrorBoundary>
-        <Suspense fallback={<SectionSkeleton variant="default" height="h-screen" />}>
-          <HomeSecondarySections
-            slidesPromise={slidesPromise}
-            highlightsPromise={highlightsPromise}
-            chefsPromise={chefsPromise}
-            lang={lang}
-          />
-        </Suspense>
+        <HeroBanner slides={heroSlides} lang={lang} />
+      </ErrorBoundary>
+
+      {/* Below the fold — code-split so the initial JS payload stays small.
+          The data itself is already here; only the component code is deferred. */}
+      <ErrorBoundary>
+        <HomeSecondarySections
+          popular={popularItems}
+          latest={latestItems}
+          chefSpecial={chefSpecialItems}
+          chefs={chefs}
+          slides={heroSlides}
+          lang={lang}
+        />
       </ErrorBoundary>
     </div>
   );

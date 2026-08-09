@@ -11,8 +11,7 @@ import { usePrefetchRoute } from "../../../hooks/usePrefetchRoute";
 import { useLanguage } from "../../../context/LanguageContext";
 import { t } from "../../../locales/i18n/getTranslation";
 import { getProxiedImageUrl } from "../../../lib/utils/imageProxy";
-import api from "../../../api";
-import useBranchStore from "../../../store/branchStore";
+import { getLocalizedField } from "../../../lib/utils/productTransform";
 import type { Locale } from "@/locales/i18n/config";
 
 // Import Swiper CSS - Next.js will handle optimization
@@ -46,85 +45,29 @@ interface BannerSectionProps {
 export default function BannerSection({ slides: apiSlides = [], lang: serverLang = null }: BannerSectionProps) {
   const { prefetchRoute } = usePrefetchRoute();
   const { lang: clientLang } = useLanguage();
-  const { getSelectedBranchId } = useBranchStore();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [lang, setLang] = useState<string>(serverLang || clientLang || "bg");
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [slidesData, setSlidesData] = useState<WebsiteSlideApi[]>(apiSlides);
-  const prevLangRef = useRef(serverLang);
 
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
+  // Content is static and localized by the transform below. Switching language
+  // navigates to a different locale route, which re-renders this with new
+  // props — so there's nothing to refetch and no hydration dance to manage.
+  const lang = serverLang || clientLang;
 
-  useEffect(() => {
-    if (isHydrated && clientLang) {
-      setLang(clientLang);
-    }
-  }, [clientLang, isHydrated]);
-
-  // Update slidesData when apiSlides changes (from server)
-  useEffect(() => {
-    if (apiSlides) {
-      setSlidesData(apiSlides);
-    }
-  }, [apiSlides]);
-
-  // Re-fetch data when language changes after hydration
-  useEffect(() => {
-    if (!isHydrated || !clientLang) {
-      // Initialize prevLangRef on first render
-      if (clientLang) {
-        prevLangRef.current = clientLang;
-      }
-      return;
-    }
-
-    // Only re-fetch if language actually changed (not initial render)
-    if (prevLangRef.current && prevLangRef.current !== clientLang) {
-      const fetchSlides = async () => {
-        const branchId = getSelectedBranchId();
-        if (!branchId) {
-          prevLangRef.current = clientLang;
-          return;
-        }
-
-        try {
-          const response = await api.slides.getWebsiteSlides({ branch_id: branchId });
-          if (response?.success && response.data) {
-            setSlidesData((response.data.slides as any[]) || []);
-          }
-        } catch (error) {
-          console.error("Error fetching website slides:", error);
-        } finally {
-          // Update prevLangRef after fetch completes
-          prevLangRef.current = clientLang;
-        }
-      };
-
-      fetchSlides();
-    } else if (!prevLangRef.current) {
-      // Initialize on first render
-      prevLangRef.current = clientLang;
-    }
-  }, [isHydrated, clientLang, getSelectedBranchId]);
-
-  // Map API slides to component format
+  // Map slide content to component format
   const slides: BannerSlide[] = useMemo(() => {
-    if (!slidesData || slidesData.length === 0) {
+    if (!apiSlides || apiSlides.length === 0) {
       return [];
     }
 
-    return slidesData.map((slide, index) => ({
+    return apiSlides.map((slide, index) => ({
       id: slide.id,
-      subtitle: slide.description || t(lang, "welcome_fresheat"),
-      title: slide.title || "",
+      subtitle: getLocalizedField(slide, "description", lang) || slide.description || t(lang, "welcome_fresheat"),
+      title: getLocalizedField(slide, "title", lang) || slide.title || "",
       image: getProxiedImageUrl(slide.desktop_image || "") || "/img/bg/bannerBG1_1.jpg",
       bgImage: "/img/bg/bannerBG1_1.jpg",
       link: slide.menu_item_id ? `/shop/${slide.menu_item_id}` : "/shop",
       shape4Float: index % 2 === 0,
     }));
-  }, [slidesData, lang]);
+  }, [apiSlides, lang]);
 
   const currentSlide = slides[activeIndex] || slides[0];
   const preloadedImagesRef = useRef<Set<string>>(new Set());

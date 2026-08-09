@@ -11,19 +11,17 @@
  * commented-out `axiosInstance` call directly above it. Nothing above the API layer
  * (hooks, components, stores) needs to change.
  *
- * A small artificial delay is added so loading states, skeletons, and Suspense
- * boundaries behave the way they would against a real network — this is a demo of
- * the actual UX, not a stripped-down one.
+ * No artificial delay is added: this build prioritizes feeling fast and
+ * responsive (a portfolio demo, not a network simulator). Loading states and
+ * skeletons still exist in the UI and still work correctly — they simply
+ * resolve almost immediately, since there's no real round-trip to wait on.
  */
 
 import type { ApiResponse } from "../api/types";
 
-const SIMULATED_LATENCY_MS = 350;
-
-/** Resolves after a short, jittered delay to emulate real network latency. */
-function delay(ms: number = SIMULATED_LATENCY_MS): Promise<void> {
-  const jitter = Math.random() * 150;
-  return new Promise((resolve) => setTimeout(resolve, ms + jitter));
+/** Resolves on the next microtask — keeps call sites async-safe without adding latency. */
+function delay(): Promise<void> {
+  return Promise.resolve();
 }
 
 /** Wraps a value in the standard `{ success, data }` envelope after a simulated round-trip. */
