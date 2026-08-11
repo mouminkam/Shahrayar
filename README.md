@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/assets/logo.png" alt="Shahrayar" width="100" />
+  <img src=".github/assets/logo.png" alt="Shahrayar" width="200" />
 </p>
 
 <h1 align="center">Shahrayar — Storefront</h1>
