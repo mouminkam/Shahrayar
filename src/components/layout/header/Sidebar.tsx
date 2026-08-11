@@ -9,7 +9,7 @@ import LanguageSwitcher from "../LanguageSwitcher";
 import useBranchStore from "../../../store/branchStore";
 import { usePrefetchRoute } from "../../../hooks/usePrefetchRoute";
 import { useLocalizedRouter } from "../../../hooks/useLocalizedRouter";
-import { NAV_LINKS } from "../../../data/constants";
+import { NAV_LINKS, LOGO_DIMENSIONS } from "../../../data/constants";
 import { useLanguage } from "../../../context/LanguageContext";
 import { t } from "../../../locales/i18n/getTranslation";
 import { transformMenuItemsToProducts } from "../../../lib/utils/productTransform";
@@ -199,8 +199,8 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                         <Image
                           src="/img/logo/mainlogo.png"
                           alt="logo"
-                          width={150}
-                          height={60}
+                          width={LOGO_DIMENSIONS.width}
+                          height={LOGO_DIMENSIONS.height}
                           className="w-auto h-25 object-contain"
                           quality={90}
                           priority

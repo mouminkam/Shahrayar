@@ -8,6 +8,7 @@ import { useLanguage } from "../../../context/LanguageContext";
 import { t } from "../../../locales/i18n/getTranslation";
 import { getProxiedImageUrl } from "../../../lib/utils/imageProxy";
 import { getLocalizedField } from "../../../lib/utils/productTransform";
+import SectionHeading from "../../ui/SectionHeading";
 import type { Locale } from "../../../locales/i18n/config";
 
 interface Slide {
@@ -30,9 +31,18 @@ interface Offer {
 interface OfferCardsProps {
   slides?: Slide[];
   lang?: Locale | null;
+  /** Set only when this section is part of the home page's chapter sequence. */
+  chapter?: number;
+  /** Hides the section heading — used on pages (e.g. About) that already introduce these cards themselves. */
+  hideHeading?: boolean;
 }
 
-export default function OfferCards({ slides: apiSlides = [], lang: serverLang = null }: OfferCardsProps) {
+export default function OfferCards({
+  slides: apiSlides = [],
+  lang: serverLang = null,
+  chapter,
+  hideHeading = false,
+}: OfferCardsProps) {
   const { lang: clientLang } = useLanguage();
 
   // Content is static and localized by the transform below. Switching language
@@ -46,26 +56,26 @@ export default function OfferCards({ slides: apiSlides = [], lang: serverLang = 
       // Fallback offers if no data
       return [
         {
-          title: "SPICY FRIED CHICKEN",
+          title: "Chicken Shawarma Wrap",
           subtitle: t(lang, "on_this_week"),
           description: t(lang, "limited_time_offer"),
-          image: "/img/offer/offerThumb1_1.png",
+          image: "/img/offer/offerThumb1_3.png",
           bgImage: "/img/bg/offerBG1_1.jpg",
           link: "/shop",
         },
         {
-          title: "TODAY SPACIAL FOOD",
-          subtitle: t(lang, "welcome_fresheat"),
+          title: "Signature Burger",
+          subtitle: t(lang, "on_this_week"),
           description: t(lang, "limited_time_offer"),
           image: "/img/offer/offerThumb1_2.png",
           bgImage: "/img/bg/offerBG1_1.jpg",
           link: "/shop",
         },
         {
-          title: "SPECIAL CHICKEN ROLL",
+          title: "Family Feast Combo",
           subtitle: t(lang, "on_this_week"),
           description: t(lang, "limited_time_offer"),
-          image: "/img/offer/offerThumb1_3.png",
+          image: "/img/offer/offerThumb1_1.png",
           bgImage: "/img/bg/offerBG1_1.jpg",
           link: "/shop",
         },
@@ -97,6 +107,14 @@ export default function OfferCards({ slides: apiSlides = [], lang: serverLang = 
   return (
     <section className="py-12 mb-12 sm:mb-0 sm:py-16 bg-bg3 ">
       <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
+        {!hideHeading && (
+          <SectionHeading
+            chapter={chapter}
+            eyebrow={t(lang, "on_this_week")}
+            title={t(lang, "weekly_specials_title")}
+            className="mb-12 sm:mb-14"
+          />
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {offers.length > 0 && offers.map((offer, index) => (
             <motion.div
@@ -152,7 +170,7 @@ export default function OfferCards({ slides: apiSlides = [], lang: serverLang = 
                     width={200}
                     height={200}
                     className="object-contain w-50 h-40 sm:w-40 md:w-48 lg:w-42 xl:w-52 2xl:w-55"
-                    quality={75}
+                    quality={85}
                     loading="lazy"
                     sizes="(max-width: 640px) 160px, (max-width: 1024px) 192px, (max-width: 1280px) 168px, (max-width: 1536px) 208px, 220px"
                   />

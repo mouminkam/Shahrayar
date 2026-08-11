@@ -48,7 +48,7 @@ export default function HomeSecondarySections({
 
       <ErrorBoundary>
         <AnimatedSection>
-          <OfferCards slides={slides as never} lang={lang} />
+          <OfferCards slides={slides as never} lang={lang} chapter={2} />
         </AnimatedSection>
       </ErrorBoundary>
 
@@ -60,7 +60,7 @@ export default function HomeSecondarySections({
 
       <ErrorBoundary>
         <AnimatedSection>
-          <PopularDishes rawPopularData={popular} lang={lang} />
+          <PopularDishes rawPopularData={popular} lang={lang} chapter={4} />
         </AnimatedSection>
       </ErrorBoundary>
 
@@ -78,7 +78,7 @@ export default function HomeSecondarySections({
 
       <ErrorBoundary>
         <AnimatedSection>
-          <ChefeSection chefs={chefs as never} lang={lang} />
+          <ChefeSection chefs={chefs as never} lang={lang} chapter={7} />
         </AnimatedSection>
       </ErrorBoundary>
     </>

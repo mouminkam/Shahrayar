@@ -1,167 +1,72 @@
 /**
- * Image Proxy Utility
+ * Image URL resolver — the seam where remote (backend) images would be rewritten.
  *
- * Converts image URLs from API to proxy URLs to solve CORS issues.
+ * WHY THIS IS A PASS-THROUGH
+ * In the integrated build every image lived on the API host, so this module
+ * rewrote `https://<api-host>/storage/x.png` into `/api/images/storage/x.png`,
+ * a Next route handler that proxied the bytes to dodge CORS. This portfolio
+ * build has **no backend**: every image in `src/mocks/fixtures/*` is a local
+ * file under `public/img/`, so there is nothing to proxy and no cross-origin
+ * request to make.
  *
- * Usage:
- * import { getProxiedImageUrl } from '@/lib/utils/imageProxy';
- * const proxiedUrl = getProxiedImageUrl(imageUrl);
+ * The functions are kept (same names, same signatures) so that call sites —
+ * OptimizedImage, ChefeSection, BannerSection, productTransform — read exactly
+ * as they do in the integrated version. To wire a real backend back up, restore
+ * the URL-rewriting body described in each PRODUCTION note and re-add the
+ * `/api/images/[...path]` route handler.
  */
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://shahrayar.peaklink.pro/api/v1';
-const API_DOMAIN = API_BASE_URL.replace('/api/v1', '');
 
 /**
- * Checks if an image URL is from the API domain
- * @param imageUrl - Image URL to check
- * @returns True if URL is from API domain
+ * PRODUCTION: `return imageUrl.includes(API_DOMAIN)` where `API_DOMAIN` comes
+ * from `NEXT_PUBLIC_API_BASE_URL`. With no backend, no URL is ever an API URL.
  */
-export function isApiImageUrl(imageUrl: string | null | undefined): boolean {
-  if (!imageUrl || typeof imageUrl !== 'string') {
-    return false;
-  }
-
-  // Check if URL contains the API domain
-  return imageUrl.includes(API_DOMAIN) || imageUrl.includes('peaklink.pro');
+export function isApiImageUrl(_imageUrl: string | null | undefined): boolean {
+  return false;
 }
 
 /**
- * Extracts the path from a full API image URL
- * @param imageUrl - Full image URL
- * @returns Path segment (e.g., "storage/website-slides/image.png") or null
- */
-function extractImagePath(imageUrl: string | null | undefined): string | null {
-  if (!imageUrl || typeof imageUrl !== 'string') {
-    return null;
-  }
-
-  try {
-    // If it's a full URL, extract the path
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      const url = new URL(imageUrl);
-      // Remove leading slash from pathname
-      return url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
-    }
-
-    // If it's already a relative path, return as is (remove leading slash if present)
-    if (imageUrl.startsWith('/storage/') || imageUrl.startsWith('storage/')) {
-      return imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl;
-    }
-
-    // If it's a relative path without /storage/, add it
-    if (!imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
-      return `storage/${imageUrl}`;
-    }
-
-    // If it starts with /, remove it
-    return imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl;
-  } catch (error) {
-    console.warn('Failed to extract image path:', error);
-    return null;
-  }
-}
-
-/**
- * Converts an API image URL to a proxy URL
- * @param imageUrl - Original image URL from API
- * @returns Proxy URL or original URL if not from API
+ * Resolves an image URL for use in a Next `<Image>`.
  *
- * @example
- * // Full URL from API
- * getProxiedImageUrl('https://shahrayar.peaklink.pro/storage/website-slides/image.png')
- * // Returns: '/api/images/storage/website-slides/image.png'
- *
- * @example
- * // Relative path
- * getProxiedImageUrl('/storage/website-slides/image.png')
- * // Returns: '/api/images/storage/website-slides/image.png'
- *
- * @example
- * // Non-API URL (returns as is)
- * getProxiedImageUrl('https://example.com/image.png')
- * // Returns: 'https://example.com/image.png'
+ * PRODUCTION: rewrote API-hosted URLs to `/api/images/<path>` (the CORS proxy
+ * route) and left everything else untouched. Here every source is already a
+ * local `/img/...` path, so it is returned as-is.
  */
 export function getProxiedImageUrl(imageUrl: string | null | undefined): string | null {
-  // Return null/empty if no URL provided
-  if (!imageUrl || typeof imageUrl !== 'string') {
+  if (!imageUrl || typeof imageUrl !== "string") {
     return imageUrl ?? null;
   }
-
-  // If it's a data URL, return as is
-  if (imageUrl.startsWith('data:')) {
-    return imageUrl;
-  }
-
-  // If it's a local path (starts with / and not from API), return as is
-  if (imageUrl.startsWith('/') && !isApiImageUrl(imageUrl)) {
-    return imageUrl;
-  }
-
-  // If it's not from the API domain, return original URL
-  if (!isApiImageUrl(imageUrl)) {
-    return imageUrl;
-  }
-
-  // Extract the path from the URL
-  const imagePath = extractImagePath(imageUrl);
-
-  if (!imagePath) {
-    // If we can't extract path, return original URL
-    console.warn('Could not extract path from image URL:', imageUrl);
-    return imageUrl;
-  }
-
-  // Construct proxy URL
-  // Remove /storage/ prefix if present (we'll add it in the path)
-  const cleanPath = imagePath.startsWith('storage/') ? imagePath : `storage/${imagePath}`;
-
-  // Preserve query parameters if any
-  try {
-    const url = new URL(imageUrl);
-    const queryString = url.search;
-    return `/api/images/${cleanPath}${queryString}`;
-  } catch {
-    // If URL parsing fails, assume no query params
-    return `/api/images/${cleanPath}`;
-  }
+  return imageUrl;
 }
 
-/**
- * Batch convert multiple image URLs to proxy URLs
- * @param imageUrls - Array of image URLs
- * @returns Array of proxy URLs
- */
+/** Batch form of {@link getProxiedImageUrl}. */
 export function getProxiedImageUrls(imageUrls: (string | null | undefined)[]): (string | null)[] {
   if (!Array.isArray(imageUrls)) {
     return [];
   }
-
   return imageUrls.map((url) => getProxiedImageUrl(url));
 }
 
 /**
- * Converts an object with image URLs to use proxy URLs
- * Useful for transforming API responses
- * @param obj - Object that may contain image URLs
- * @param imageKeys - Keys in the object that contain image URLs
- * @returns Object with proxied image URLs
+ * Resolves the image-bearing keys of an object (e.g. a slide from the API).
+ * A no-op here for the same reason as {@link getProxiedImageUrl}, but kept so
+ * response-shaping call sites stay identical to the integrated build.
  */
 export function proxyObjectImages<T extends Record<string, unknown>>(
   obj: T | null | undefined,
-  imageKeys: string[] = ['image', 'image_url', 'desktop_image', 'mobile_image', 'thumbnail']
+  imageKeys: string[] = ["image", "image_url", "desktop_image", "mobile_image", "thumbnail"]
 ): T | null | undefined {
-  if (!obj || typeof obj !== 'object') {
+  if (!obj || typeof obj !== "object") {
     return obj;
   }
 
-  const proxied: Record<string, unknown> = { ...obj };
+  const resolved: Record<string, unknown> = { ...obj };
 
   imageKeys.forEach((key) => {
-    const value = proxied[key];
-    if (value && typeof value === 'string') {
-      proxied[key] = getProxiedImageUrl(value);
+    const value = resolved[key];
+    if (value && typeof value === "string") {
+      resolved[key] = getProxiedImageUrl(value);
     }
   });
 
-  return proxied as T;
+  return resolved as T;
 }

@@ -157,40 +157,33 @@ export async function isImageLoaded(imageUrl: string | null | undefined): Promis
 }
 
 /**
- * Converts a relative image path from API to a full URL
- * Handles both relative paths (e.g., "avatars/...") and full URLs
- * Automatically uses proxy for API images to solve CORS issues
+ * Resolves an image path coming out of the data layer into something
+ * `<Image>` can render.
  *
- * @param imagePath - Image path from API (can be relative, full URL, or data URL)
- * @returns Full URL for Next.js Image component (proxied if from API), or null if no path
+ * PRODUCTION: a bare path like "avatars/me.png" was a *relative* path on the
+ * API host, so this prefixed `NEXT_PUBLIC_API_BASE_URL`'s origin + "/storage/"
+ * and handed the result to the CORS proxy (see `imageProxy.ts`). In this
+ * portfolio build the fixtures already carry local `/img/...` paths, so the
+ * only work left is normalising a missing leading slash.
+ *
+ * @param imagePath - Image path from the data layer (local path or data URL)
+ * @returns A URL usable by next/image, or null if there is no path
  */
 export function getFullImageUrl(imagePath: string | null | undefined): string | null {
   if (!imagePath) {
     return null;
   }
 
-  // If data URL (from FileReader), return as is
+  // Data URL (e.g. a FileReader preview of a just-picked avatar) — use as is.
   if (imagePath.startsWith('data:')) {
     return imagePath;
   }
 
-  // If already a full URL, use proxy if it's from API domain
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+  // Already absolute (local public path or an external URL) — use as is.
+  if (imagePath.startsWith('/') || imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
     return getProxiedImageUrl(imagePath);
   }
 
-  // If starts with /storage/, construct full URL then proxy it
-  if (imagePath.startsWith('/storage/')) {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://shahrayar.peaklink.pro/api/v1';
-    const storageBaseUrl = API_BASE_URL.replace('/api/v1', '');
-    const fullUrl = `${storageBaseUrl}${imagePath}`;
-    return getProxiedImageUrl(fullUrl);
-  }
-
-  // If relative path (e.g., "avatars/..."), construct full URL then proxy it
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://shahrayar.peaklink.pro/api/v1';
-  const storageBaseUrl = API_BASE_URL.replace('/api/v1', '');
-  const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
-  const fullUrl = `${storageBaseUrl}/storage/${cleanPath}`;
-  return getProxiedImageUrl(fullUrl);
+  // Bare relative path — resolve against the local public directory.
+  return getProxiedImageUrl(`/${imagePath}`);
 }

@@ -49,16 +49,16 @@ const ProductCard = memo(function ProductCard({ product, viewMode = "grid" }: Pr
             width={192}
             height={192}
             className="w-32 h-32 sm:w-48 sm:h-48 object-cover rounded-full relative z-10"
-            quality={75}
+            quality={85}
             loading="lazy"
             sizes="(max-width: 640px) 128px, 192px"
           />
           <div className="circle-shape absolute -top-[4.2px] w-[calc(100%+10px)] h-[calc(100%+10px)] left-1/2  transform  -translate-x-1/2 z-0">
             <Image
-              src="/img/food-items/circleShape.png"
+              src="/img/food-items/circleShape2.png"
               alt="shape"
-              width={150}
-              height={150}
+              width={324}
+              height={324}
               className="w-full h-full animate-spin-slow"
               unoptimized={true}
             />
@@ -99,10 +99,10 @@ const ProductCard = memo(function ProductCard({ product, viewMode = "grid" }: Pr
       <div className="absolute -top-20 left-1/2 -translate-x-1/2 flex justify-center items-center shrink-0 w-full">
         {/* Circle Shape - Behind the food image */}
         <Image
-          src="/img/food-items/circleShape.png"
+          src="/img/food-items/circleShape2.png"
           alt="shape"
-          width={150}
-          height={150}
+          width={324}
+          height={324}
           className="w-51 h-51 -top-[46px] absolute z-0 animate-spin-slow"
           unoptimized={true}
         />

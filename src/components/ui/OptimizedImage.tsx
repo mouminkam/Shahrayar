@@ -181,14 +181,6 @@ export default function OptimizedImage({
               clearTimeout(loadTimeoutRef.current);
             }
           }}
-          onLoadingComplete={() => {
-            setImageLoaded(true);
-            setImageError(false);
-            // Clear timeout if image loads successfully
-            if (loadTimeoutRef.current) {
-              clearTimeout(loadTimeoutRef.current);
-            }
-          }}
           placeholder={blurPlaceholder ? "blur" : "empty"}
           {...rest}
         />
@@ -243,14 +235,6 @@ export default function OptimizedImage({
           setImageError(true);
           setImageLoaded(false);
           // Clear load timeout
-          if (loadTimeoutRef.current) {
-            clearTimeout(loadTimeoutRef.current);
-          }
-        }}
-        onLoadingComplete={() => {
-          setImageLoaded(true);
-          setImageError(false);
-          // Clear timeout if image loads successfully
           if (loadTimeoutRef.current) {
             clearTimeout(loadTimeoutRef.current);
           }

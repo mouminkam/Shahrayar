@@ -2,26 +2,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "htmlbeans.com",
-        port: "",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "shahrayar.peaklink.pro",
-        port: "",
-        pathname: "/**",
-      },
-    ],
+    // No `remotePatterns`: this is the frontend-only build, so every image is a
+    // local file under /public/img. PRODUCTION: the API host was allow-listed
+    // here so next/image could optimise backend-served uploads.
     // Image optimization settings - Improved for better performance
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
- 
+
     // Configure allowed quality values used in Image components
-    qualities: [75, 80, 85, 90],
+    qualities: [75, 80, 85, 90, 100],
     // Enable content-based image sizing
     dangerouslyAllowSVG: true,
     // PHASE-A FIX [M4]: sandbox SVGs to prevent script execution

@@ -1,64 +1,148 @@
-# Shahrayar Restaurant — Frontend
+<p align="center">
+  <img src=".github/assets/logo.png" alt="Shahrayar" width="130" />
+</p>
 
-A production-grade, fully **TypeScript** Next.js 16 storefront for **Shahrayar**, a Middle Eastern restaurant. Customers browse the menu, customize dishes, manage a cart, and check out (cash or Stripe) — in **three languages** (Arabic, English, Bulgarian) with full right‑to‑left support for Arabic.
+<h1 align="center">Shahrayar — Storefront</h1>
 
-> 🔗 **Live, backend‑connected version:** _add link here once deployed_
+<p align="center">
+  <em>Char-grilled shawarma, wood-fired pizza, and plates built to share.<br/>
+  A frontend-only rebuild — and every dish photo is the actual dish, not a gray box someone forgot to swap out.</em>
+</p>
+
+<p align="center">
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" />
+  <img alt="React" src="https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white" />
+  <img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?logo=tailwindcss&logoColor=white" />
+  <img alt="i18n" src="https://img.shields.io/badge/i18n-en_·_ar_·_bg-8b5cf6" />
+  <img alt="RTL" src="https://img.shields.io/badge/RTL-supported-25c2a0" />
+</p>
+
+---
+
+## What this is
+
+This is the customer-facing storefront for **Shahrayar**, a Middle Eastern restaurant — menu
+browsing, per-dish customization, cart, coupons, delivery quotes, checkout, order history, and a
+full auth flow, in **three languages** with correct right-to-left rendering for Arabic. It's built
+the way you'd build the real thing, then had its network cord cut on purpose.
+
+> 🔗 **Live, backend-connected version:** *add link here once deployed*
 >
-> This repository is a **frontend‑only build**, meant to be evaluated as a piece of frontend engineering on its own — cloned, run locally, and read end‑to‑end without needing a backend, database, or API keys. Every network‑shaped call in this codebase resolves against realistic local fixtures instead of a live server. See [**Mock Data Architecture**](#mock-data-architecture--how-this-would-connect-to-a-real-backend) below for exactly how — and where — a real backend plugs back in.
+> This repository is the **frontend-only** half of that project, published on its own so it can be
+> read end to end as a piece of frontend engineering — no backend, no database, no API keys required
+> to clone it and have it running in under a minute. Every function that would normally call a
+> network endpoint resolves against realistic local fixtures instead, through the *exact same seam*
+> a real API call would use. See [Mock data architecture](#mock-data-architecture) for where that
+> seam is, and how thin the diff is to reconnect it.
 
----
+## Getting started
 
-## Table of Contents
+```bash
+npm install
+npm run dev
+```
 
-- [Tech Stack](#tech-stack)
-- [Key Features](#key-features)
-- [Mock Data Architecture — how this would connect to a real backend](#mock-data-architecture--how-this-would-connect-to-a-real-backend)
-- [Architecture](#architecture)
-  - [Rendering strategy — streaming SSR](#rendering-strategy--streaming-ssr)
-  - [Internationalization (i18n) & RTL](#internationalization-i18n--rtl)
-  - [Data layer](#data-layer)
-  - [State management](#state-management)
-  - [Security](#security)
-- [Folder Structure](#folder-structure)
-- [Getting Started](#getting-started)
-- [Available Scripts](#available-scripts)
-- [Known Limitations](#known-limitations)
+Open **http://localhost:3000** — it redirects to `/en` (or go straight to `/en`, `/ar`, `/bg`).
+Nothing else to configure: no `.env` file, no database, no seed step. Every menu item, category,
+chef, branch, and demo order is a plain TypeScript module, already there the moment the app boots.
 
----
+```bash
+npm run build          # production build (runs the TypeScript check)
+npm start               # serve the production build
+npm run lint            # ESLint
+npm test                 # Jest — unit tests
+npm run test:watch      # Jest --watch
+npm run test:coverage   # Jest --coverage
+```
 
-## Tech Stack
+## What's actually in the box
+
+- **Full ordering flow** — browse the menu, customize a dish (size, ingredients, option groups,
+  sauces), add to cart, apply a coupon, get a delivery quote, check out, and see order history —
+  all fully interactive against mock data, not a static mockup someone can only look at.
+- **Trilingual, with real RTL** — English, Arabic, and Bulgarian (~370–385 translation keys each) via
+  `/{locale}/...` routing, with automatic locale detection (cookie → `Accept-Language` → default).
+  Arabic renders `dir="rtl"` from the very first server-rendered byte — no client-side flip, no
+  layout flash you can catch if you refresh fast enough.
+- **Full auth flow** — register, sign in, phone-OTP verification, Google OAuth, forgot/reset
+  password — running end-to-end against the mock layer, including the edge cases (invalid
+  credentials, validation errors) that get skipped in most demos because nobody double-checks them.
+- **A checkout that actually works** — an interactive Leaflet delivery map with reverse geocoding,
+  a live delivery-fee quote, and Cash-on-Delivery as a fully completable path (Stripe is wired but
+  intentionally stubbed — see [Honest trade-offs](#honest-trade-offs)).
+- **SEO that's actually server-rendered** — `generateMetadata` per route, a locale-aware
+  `sitemap.xml` and `robots.txt`, Open Graph/Twitter tags, and static legal pages
+  (`/terms-conditions`, `/privacy-policy`) that are both linkable on their own and reusable inside
+  an in-page modal, from the same content and the same rendering component.
+- **One deliberate visual identity** — a single consistent color system across the whole site
+  (`#EB0029` / `#FFBA00`), not a light/dark toggle bolted on for the sake of having one.
+
+## Tech stack
 
 | Area | Choice |
-|------|--------|
+|---|---|
 | Framework | **Next.js 16** (App Router, Turbopack) |
-| Language | **TypeScript** (strict) — 100% of `src` is `.ts`/`.tsx` |
+| Language | **TypeScript**, strict — 100% of `src` is `.ts`/`.tsx` |
 | UI runtime | **React 19** |
-| Styling | **Tailwind CSS v4** (single unified theme, no dark‑mode toggle) |
+| Styling | **Tailwind CSS v4** |
 | Animation | Framer Motion, Lenis (smooth scroll) |
-| State | **Zustand** (with `persist`) |
+| Maps | Leaflet (checkout delivery picker) |
+| State | **Zustand**, persisted to `localStorage` |
 | Forms & validation | React Hook Form + **Zod** |
 | Payments | **Stripe** (`@stripe/react-stripe-js`) |
-| HTTP | Axios (separate client & server instances) |
-| Sanitization | `isomorphic-dompurify` (for API‑delivered HTML) |
+| HTTP client | Axios — client and server instances, fully wired, not currently called (see below) |
+| Sanitization | `isomorphic-dompurify`, for any HTML rendered from data |
 | Tests | Jest + Testing Library |
 
----
+## Routes
 
-## Key Features
+```
+/                                     redirects to /{locale}
+/{locale}                             home — hero, popular/latest dishes, chef's special, chefs
+/{locale}/shop  /shop/[id]            menu listing (client-side filtering) · dish detail
+/{locale}/cart  /checkout             cart · shipping + delivery map + payment, order placement
+/{locale}/checkout/stripe/*           pay · success · failed · cancel
+/{locale}/orders  /orders/[id]        order history · order detail (+ /success confirmation)
+/{locale}/profile                     account details
+/{locale}/login  /register            email/password + Google OAuth
+/{locale}/forgot-password  /reset-password
+/{locale}/add-phone  /enter-otp  /add-information  /confirm-information   phone-OTP registration
+/{locale}/about-us  /contact-us
+/{locale}/terms-conditions  /privacy-policy      statically generated, all 3 locales
+/sitemap.xml  /robots.txt
+```
 
-- **Full i18n** — Arabic (`ar`), English (`en`), Bulgarian (`bg`) via `/{locale}/...` routing, with automatic locale detection (cookie → `Accept-Language` → default `bg`).
-- **RTL** — Arabic renders with `dir="rtl"` set server‑side on `<html>`, so the first paint is already mirrored (no layout flash).
-- **Streaming SSR** — content‑heavy pages send the hero/above‑the‑fold immediately and stream the rest in via React `Suspense`, so the user sees meaningful content fast.
-- **Real e‑commerce flows** — menu browsing, per‑item customization (sizes, ingredients, option groups, add‑ons), cart, coupons, delivery quotes, cash & Stripe checkout, order history, reorder — all fully interactive against mock data.
-- **Auth** — email/password + phone‑OTP registration flow + Google OAuth, with middleware‑enforced route protection.
-- **SEO** — server‑rendered `metadata`/`generateMetadata`, locale‑aware `robots.txt` and `sitemap.xml`, Open Graph/Twitter tags.
-- **Single unified theme** — one consistent color system across the whole site.
+## How it's put together
 
----
+```
+src/
+  app/[lang]/       Next.js App Router routes. [lang]/layout.tsx is the one root
+                     layout — it renders <html lang dir>, so locale and text
+                     direction are correct in the very first byte the server sends.
+  content/          Static site content (menu, branches, chefs, legal copy) as
+                     plain TypeScript modules — resolved at build time, no fetch.
+  mocks/            The mock data layer: fixtures/ (menu items, orders, users, …)
+                     plus mockClient.ts, the envelope every src/api/* call resolves
+                     through instead of a network request.
+  api/               One module per backend resource (auth, menu, orders, payments,
+                     …), each typed against a shared ApiResponse<T> envelope —
+                     see Mock data architecture below.
+  components/       ui/, layout/, cart/, auth/, pages/<route>/, seo/
+  hooks/            Data + UI hooks — cart helpers, localized routing, API caching.
+  store/            Zustand stores — cart, auth, branch, toast.
+  lib/               Utilities, Zod validation schemas, i18n helpers.
+  locales/          en.json, ar.json, bg.json + i18n/{config,getTranslation}.ts
+proxy.ts            Locale detection + auth route protection (Next.js 16's
+                     renamed middleware convention).
+```
 
-## Mock Data Architecture — how this would connect to a real backend
+## Mock data architecture
 
-This build has **no live backend**. It's deployed here as a **frontend showcase**, so every function that would normally hit a network endpoint instead resolves against realistic fixtures in `src/mocks/fixtures/`. The point isn't just "fake the data" — it's to keep the exact same seam a real integration would use, so the diff to plug in a live API is small and obvious.
+This build has **no live backend** — it's published as a frontend showcase, so every function that
+would normally hit a network endpoint resolves against realistic fixtures in `src/mocks/fixtures/`
+instead. The point isn't just "fake the data" — it's to keep the exact seam a real integration would
+use, so the diff to plug one in is small and honest about where it happens.
 
 **The pattern, consistently, in every `src/api/*.ts` module:**
 
@@ -70,142 +154,89 @@ export const getMenuItems = async (params: Record<string, unknown> = {}): Promis
 };
 ```
 
-- **Same function signature, same params, same return type** (`ApiResponse<T>`) as a real network call would have.
-- The commented line directly above the mock body is the **exact real call it replaces** — not a placeholder, an accurate one-line diff.
-- `src/mocks/mockClient.ts` wraps every mock result in the identical `{ success, data, message }` envelope the real backend uses, plus a small simulated network delay — so loading states, skeletons, and `Suspense` fallbacks behave the way they would in production, not artificially instant.
-- Server Components that call `createServerAxios()` directly (home, shop, about‑us, contact‑us, sitemap — see [Data layer](#data-layer)) get a **mock Axios-shaped client** (`src/api/config/serverAxios.ts`) whose `.get()`/`.post()` pattern‑match the request URL against the same fixtures. The real implementation (`axios.create({ baseURL, headers })`) is preserved as a commented block at the bottom of that file.
+- Same function signature, same params, same `ApiResponse<T>` return type a real network call
+  would have.
+- The commented `PRODUCTION:` line directly above the mock body is the **exact real call it
+  replaces** — not a placeholder comment, an accurate one-line diff.
+- `src/mocks/mockClient.ts` wraps every result in the identical `{ success, data, message }`
+  envelope a real backend would use, so loading states and skeletons behave the way they would in
+  production rather than resolving artificially instant.
+- `src/api/config/axios.ts` — the real client-side Axios instance (bearer token from the Zustand
+  auth store, selected branch id, `Accept-Language`, error normalization) is fully wired and still
+  here, it's just not called by anything in this build.
 
-**To connect a real backend:** set `NEXT_PUBLIC_API_BASE_URL` in `.env.local`, then in each `src/api/*.ts` file and in `src/api/config/serverAxios.ts`, swap the mock call for the commented `axiosInstance`/`createServerAxios` line directly above it. No changes needed anywhere above the API layer — hooks, stores, and components all consume the same `ApiResponse<T>` contract either way.
-
-**What's mocked, specifically** (`src/mocks/fixtures/`):
+**To connect a real backend:** set `NEXT_PUBLIC_API_BASE_URL` in `.env.local` (see `.env.example`),
+then in each `src/api/*.ts` file swap the mock call for the commented `axiosInstance` line directly
+above it. Nothing above the API layer — hooks, stores, components — needs to change; they all
+already consume the same `ApiResponse<T>` contract.
 
 | Fixture | Backs |
 |---|---|
-| `menuItems.ts` | 24 dishes across 6 categories, each with real sizes/ingredients; a few carry option groups + sauce customizations to exercise the full cart‑edit UI |
-| `categories.ts` | Menu categories, each with a fitting image from `public/img/dishes/` |
-| `branches.ts` | Two restaurant branches (address, hours, geo) |
-| `chefs.ts` | Chef bios for the About page, using `public/img/chefe/` |
-| `slides.ts` | Home banner slides, using `public/img/banner/` |
-| `users.ts` | One demo user + 3 realistic past orders (delivered / stripe‑paid / processing) for Profile & Orders |
+| `content/menu.ts` | 15 dishes across 5 categories, several with option groups + sauce customizations, so the cart-edit UI has something real to exercise |
+| `content/restaurant.ts` | 2 branches, 3 chef bios, 3 home banner slides |
+| `mocks/fixtures/users.ts` | A demo account with realistic past orders (delivered / Stripe-paid / processing) |
+| `mocks/fixtures/geocode.ts` | A local reverse-geocoder for the checkout map — see below |
+| `content/legal.ts` | Terms & Conditions / Privacy Policy copy, in all 3 locales |
 
-**Auth in this build:** any email/password signs in successfully (there's no credential store to check against); OTP screens accept any 4‑digit code; Stripe checkout is stubbed — the UI runs the full flow but never talks to Stripe, so **Cash on Delivery is the way to complete checkout end‑to‑end** in this demo.
+**Auth in this build:** any email/password combination signs in successfully (there's no credential
+store to check against); OTP screens accept any 4-digit code; Stripe checkout is stubbed — the UI
+runs the full flow but never talks to Stripe, so **Cash on Delivery is how you complete checkout
+end-to-end** here.
 
----
+## Two worked examples
 
-## Architecture
+### 1. A kitchen doesn't plate a photo of the dish. This one nearly did.
 
-### Rendering strategy — streaming SSR
+Partway through this rebuild, a routine "make the images sharper" pass turned into something more
+interesting. A scripted scan of every file under `public/img` for a specific gray
+(`rgb(184,184,184)`) turned up **81 literal `"580X550"`-style placeholder stubs** — leftovers from
+the original template that were never swapped for real photography. Most were harmless, unused
+files sitting dead in the repo. But cross-referencing each one against `src/` with `git grep` found
+**9 that were still wired into live mock data**: five menu dishes and three desserts a customer
+could add to their cart, a burger, and the demo account's own profile picture. Log in, check your
+order history, and you'd have been looking at a gray box with dimensions printed on it instead of a
+kunafa.
 
-Content pages don't block on their slowest data source. The page component creates data promises **without awaiting them**, renders the hero synchronously, and passes the promises down into async Server Components wrapped in `Suspense`. Each section resolves and streams in independently.
+That's the kind of bug that's easy to miss precisely *because* it doesn't crash anything — the page
+renders, the layout holds, nothing throws. It only shows up if you actually look at what's on
+screen, the same way a server only catches a wrong plate by checking it before it goes out. Fixed
+now: real photography sourced and cropped to match each dish, and the three chef portraits — which
+*were* real, just under-resolved for how large their cards render them — recomposited into the
+site's existing decorative frame (a rounded corner and a diagonal red accent baked directly into the
+original PNGs) so the design is untouched and only the photo underneath got sharper. The other ~65
+placeholder files were left exactly as they were: confirmed dead, so replacing them would only be
+downloading stock photos nobody would ever see. Full before/after list, with sources, in
+[`docs/PHOTO_CREDITS.md`](docs/PHOTO_CREDITS.md).
 
-```
-Page (Server Component)
-├── <Suspense> HeroBannerStream         ← MAIN: renders first
-└── <Suspense> HomeSecondarySections    ← SECONDARY: streams in after
-      ├── LatestItems ├── PopularDishes
-      ├── FoodMenu    ├── ChefSpecial   └── Chefs
-```
+### 2. The delivery map doesn't call a public API to work
 
-Pages using this pattern: `/`, `/about-us`, `/contact-us`, `/shop`, `/shop/[id]`. Server data fetches are wrapped in `unstable_cache` (with `revalidate`) so repeat requests are cheap. Every streamed boundary has an `ErrorBoundary` + skeleton fallback.
+The checkout page lets you drop a pin and reverse-geocodes it into a street address. The obvious way
+to do that is [Nominatim](https://nominatim.org/) — free, and exactly what the integrated build uses.
+It's also a shared public service with a strict 1 request/second rate limit and a User-Agent check,
+which is a bad dependency for a page anyone can click through on a portfolio: a burst of visits would
+start returning 429s that read to a visitor as "this feature is broken."
 
-### Internationalization (i18n) & RTL
+`src/mocks/fixtures/geocode.ts` resolves the lookup locally instead: it snaps the dropped pin to the
+nearest of a handful of real Sofia districts and returns an address in the exact shape Nominatim's
+`address` object has, so the calling code — validation, form autofill, the delivery-fee quote that
+follows it — is unchanged. Drag the pin around `/checkout` and the address updates immediately, no
+external call, no rate limit, nothing that can go down.
 
-- Every user‑facing route lives under **`src/app/[lang]/`**. `[lang]/layout.tsx` is the application's root layout — it renders `<html lang={lang} dir={...}>`, so locale and direction are correct on the server‑rendered HTML.
-- **`proxy.ts`** (Next.js 16's renamed middleware) runs on every request: it detects the locale, redirects unprefixed URLs (`/shop` → `/bg/shop`), keeps the `language` cookie in sync with the URL, and enforces auth route protection.
-- **`src/locales/{en,ar,bg}.json`** hold the UI string dictionaries (~383 keys each). `t(lang, key)` does the lookup; `src/locales/i18n/config.ts` is the single source of locale truth (`locales`, `defaultLocale`, `isRtl`, `getDirection`).
-- **`<LocalizedLink>`** (`src/components/ui/LocalizedLink.tsx`) is a drop‑in `next/link` replacement that auto‑prefixes internal hrefs with the active locale; **`useLocalizedRouter()`** does the same for programmatic navigation. External/mailto/tel links pass through untouched.
-- Language is switched via `LanguageSwitcher`, which rewrites the `/{locale}` segment of the current URL and pushes the new path.
+## Honest trade-offs
 
-### Data layer
+Nobody's portfolio project is finished, and pretending otherwise isn't useful to anyone evaluating
+this code:
 
-- `src/api/*` — one module per backend resource (`auth`, `menu`, `orders`, `payments`, …), all typed against a shared `ApiResponse<T>` envelope. In this build every function resolves against `src/mocks/fixtures/*` — see [Mock Data Architecture](#mock-data-architecture--how-this--would-connect-to-a-real-backend) for the exact swap-in point for a real API.
-- `src/api/config/axios.ts` — the real client-side Axios instance (bearer token, branch id, `Accept-Language`, error normalization) is still here, fully wired, just not called by anything in this mock build. `src/api/config/serverAxios.ts` is the server-side equivalent, currently mock-routed for Server Components (safe inside `unstable_cache`).
-- `src/hooks/*` — data‑fetching hooks with an in‑memory cache + request de‑duplication that invalidates when the selected branch changes (this layer is unchanged by the mock swap — it just calls `src/api/*` the same way it always would).
-
-### State management
-
-Zustand stores in `src/store/`, persisted to `localStorage`:
-
-- `authStore` — user/session; **writes an `auth-token` cookie** on login/register/OAuth so middleware can read auth state, clears it on logout.
-- `cartStore` — cart items keyed by full customization signature, plus coupon/delivery/order‑type and derived totals.
-- `branchStore` — selected branch, branch list, contact/hours/location helpers.
-- `toastStore` — transient notifications.
-
-### Security
-
-Carried over and preserved from the prior hardening pass:
-
-- Middleware route protection (cookie‑based) for `/cart`, `/checkout`, `/profile`, `/orders`; guest‑only redirects for auth pages — all locale‑prefix aware.
-- Security headers (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, SVG CSP sandbox) in `next.config.ts`.
-- API‑delivered HTML (legal pages) sanitized with `isomorphic-dompurify`.
-- No token/PII logging in checkout/order/auth flows.
-
----
-
-## Folder Structure
-
-```
-src/
-├── app/
-│   ├── [lang]/                 # all localized routes; [lang]/layout.tsx is the root layout
-│   │   ├── layout.tsx          # <html lang dir>, providers, header/footer
-│   │   ├── page.tsx            # home (streaming SSR)
-│   │   ├── shop/ · cart/ · checkout/ (+ stripe/*) · orders/ · profile/
-│   │   ├── login/ · register/ · forgot-password/ · … (auth flow)
-│   │   ├── about-us/ · contact-us/ · privacy-policy/ · terms-conditions/
-│   │   └── _components/         # colocated streaming section components
-│   ├── api/images/[...path]/   # image proxy route handler
-│   ├── robots.ts · sitemap.ts  # locale-aware, server-generated
-│   └── globals.css             # Tailwind v4 theme tokens
-├── api/                        # backend resource modules (+ shared ApiResponse type)
-├── components/                 # ui/, layout/, cart/, auth/, pages/<route>/, seo/
-├── context/                    # LanguageContext, HighlightsContext, CheckoutPromoContext
-├── hooks/                      # data + UI hooks (useLocalizedRouter, useCart, useShopProducts, …)
-├── lib/                        # getLanguage, getAuthToken, fetchDefaultBranch, utils/, validations/
-├── locales/                    # en.json, ar.json, bg.json + i18n/{config,getTranslation}.ts
-├── mocks/                       # fixtures/ (menu, branches, chefs, slides, users/orders) + mockClient.ts
-└── store/                      # Zustand stores
-proxy.ts                        # locale routing + auth middleware (Next.js 16 convention)
-```
-
-## Getting Started
-
-```bash
-npm install
-npm run dev
-```
-
-Then open **http://localhost:3000/en** (or `/ar`, `/bg`). No `.env` setup, database, or API keys required — everything runs against local mock data out of the box.
-
-> **Dev note on the root redirect:** In production, `proxy.ts` redirects `/` → `/{locale}` automatically. In local dev this redirect depends on Next.js's edge‑runtime middleware, which currently does **not** run under **Node.js v24** (an upstream Next 16 + Turbopack incompatibility). If `/` returns 404 in dev, either navigate directly to `/en` · `/ar` · `/bg`, or run dev on **Node 20/22 LTS**, where the middleware (and the automatic `/` redirect) works. Production builds are unaffected — the redirect works there regardless.
-
-## Environment Variables
-
-Not required to run this build — see the note above. `.env.local` only matters once you [connect a real backend](#mock-data-architecture--how-this-would-connect-to-a-real-backend):
-
-```bash
-NEXT_PUBLIC_API_BASE_URL=https://your-real-api.example.com/api/v1
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=<google-oauth-client-id>
-NEXT_PUBLIC_GOOGLE_REDIRECT_URI=<oauth-redirect-uri>
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=<stripe-publishable-key>
-# NEXT_PUBLIC_SITE_URL=https://your-domain            # used for metadata/sitemap absolute URLs
-```
-
-## Available Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `npm run dev` | Start the dev server (Turbopack) |
-| `npm run build` | Production build (runs `tsc` type‑check) |
-| `npm start` | Serve the production build |
-| `npm run lint` | ESLint |
-| `npm test` | Jest test suite |
-| `npm run test:coverage` | Tests with coverage |
-
-## Known Limitations
-
-- **This is a mock-data build, by design** — see [Mock Data Architecture](#mock-data-architecture--how-this-would-connect-to-a-real-backend). Card payments, real auth, and persisted orders across sessions/devices are intentionally out of scope here; the live, backend-connected version is linked at the top of this README.
-- **Middleware in dev under Node 24** — see the dev note above. Production is unaffected.
-- **Pre-existing test import** — a few Jest suites reference a `src/__tests__/utils/mockData` helper that was never committed to the repo; those specific suites won't run until that fixture is added. This predates the frontend/mock rework and is unrelated to it.
-- **Mock catalog is English-first** — the 24 mock menu items and 4 mock chefs are written in English with Bulgarian/Arabic translations of the *site chrome* (nav, buttons, forms, labels) fully in place; a real backend would supply its own per-locale product copy the same way `getLocalizedField()` already expects (`name_en`/`name_bg`/etc. fields are wired and ready).
-- Some deeply dynamic payloads are typed loosely (`Record<string, unknown>` / narrowed at the read site) where a real backend would have no fixed schema either — deliberate, to avoid inventing contracts an API doesn't guarantee.
+- **The Jest suite has no working config yet.** `jest`, `jest-environment-jsdom`, and
+  `@testing-library/*` are installed and several `*.test.ts(x)` files exist, but there's no
+  `jest.config` wiring TypeScript/JSX transformation or module resolution, so `npm test` currently
+  fails to even compile the suites. This is a known gap being closed, not a silent one.
+- **Card payments don't charge anything.** Stripe is fully wired on the UI side and stops at a
+  clearly-labeled stub — see [Mock data architecture](#mock-data-architecture). Cash on Delivery is
+  the intentional way to reach a real order confirmation in this build.
+- **The mock catalog is English-first.** The 15 mock dishes and 3 mock chefs are written in English;
+  Bulgarian/Arabic translations of the *site chrome* (nav, buttons, forms, labels) are fully in
+  place. A real backend would supply its own per-locale product copy the same way
+  `getLocalizedField()` already expects (`name_en`/`name_bg`/… fields are wired and ready).
+- **This build has no persistence.** Everything lives in memory/`localStorage` for the session —
+  intentional for a mock-data demo, not a corner cut by accident.

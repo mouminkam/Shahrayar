@@ -5,6 +5,7 @@ import { Facebook, Twitter, Youtube, Linkedin } from "lucide-react";
 import { usePrefetchRoute } from "../../../hooks/usePrefetchRoute";
 import { useLanguage } from "../../../context/LanguageContext";
 import { t } from "../../../locales/i18n/getTranslation";
+import { LOGO_DIMENSIONS } from "../../../data/constants";
 
 export default function CompanyInfo() {
   const { prefetchRoute } = usePrefetchRoute();
@@ -22,9 +23,9 @@ export default function CompanyInfo() {
           <Image
             src="/img/logo/mainlogo.png"
             alt="logo"
-            width={180}
-            height={72}
-            className="h-14 sm:h-16 md:h-18 w-auto h-auto object-contain"
+            width={LOGO_DIMENSIONS.width}
+            height={LOGO_DIMENSIONS.height}
+            className="h-14 sm:h-16 md:h-18 w-auto object-contain"
             priority
           />
         </LocalizedLink>

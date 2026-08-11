@@ -10,7 +10,12 @@
   --color-bg2: #F4F1EA;
   --color-bg3: black;
   --color-bgimg: #1E1E1E;
+  /* Deep ember — a fourth, quieter tone for card/section depth. Same warm
+     family as theme/theme2/theme3, pulled down toward black so it reads as
+     shadow rather than another bright accent. */
+  --color-ember: #2B0A06;
   --font-oswald: var(--font-oswald);
+  --font-amiri: var(--font-amiri);
 }
 
 /* Custom CSS Variables */
@@ -216,5 +221,57 @@ body {
     transition:
       transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
       box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Hero — lantern glow, ambient star field, signature CTA
+   --------------------------------------------------------------------------- */
+.hero-lantern-glow {
+  background: radial-gradient(circle, rgba(255, 186, 0, 0.32) 0%, rgba(255, 186, 0, 0.14) 35%, transparent 70%);
+  filter: blur(10px);
+  animation: lantern-breathe 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes lantern-breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.06);
+  }
+}
+
+.hero-star-field {
+  background-image: radial-gradient(rgba(255, 186, 0, 0.35) 1px, transparent 1px);
+  background-size: 42px 42px;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.hero-cta {
+  background: linear-gradient(135deg, var(--color-theme3), var(--color-theme2));
+  color: #1a0e00;
+  box-shadow: 0 10px 30px -8px rgba(255, 186, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease,
+    background 0.3s ease;
+}
+
+.hero-cta:hover {
+  background: linear-gradient(135deg, var(--color-theme2), var(--color-theme));
+  color: #fff;
+  box-shadow: 0 14px 36px -6px rgba(235, 0, 41, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-lantern-glow {
+    animation: none;
   }
 }

@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -40,16 +41,28 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# IDE settings
+# IDE / tool settings — not part of the shipped project
 .cursor/
 .vscode/
 .idea/
+.claude/
 
 # OS files
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# documentation files
-CART_STORE_EXPLANATION.md
-RESTRUCTURING_DOCUMENTATION.md
+# Internal process documentation from an earlier refactor/audit pass.
+# Stale (pre-TypeScript, .jsx-era, two-locale) and not representative of the
+# current codebase, so it's kept locally for reference but not published.
+# docs/REORDER_API_SPECIFICATION.md is deliberately NOT listed here — it's
+# still accurate and referenced from the README.
+/ARCHITECTURE_DIFF.md
+/MIGRATION_REPORT.md
+/SECURITY_AUDIT.md
+docs/BRANCH_ID_SYSTEM_GUIDE.md
+docs/HOME_PAGE_DATA_FLOW.md
+docs/HOME_PAGE_DATA_FLOW_DETAILED.md
+docs/LANGUAGE_SYSTEM_GUIDE.md
+docs/PAGE_STRUCTURE_GUIDE.md
+docs/TESTING.md

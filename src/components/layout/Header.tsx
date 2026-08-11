@@ -19,7 +19,7 @@ import { useScroll } from "../../hooks/useScroll";
 import useAuthStore from "../../store/authStore";
 import { usePrefetchRoute } from "../../hooks/usePrefetchRoute";
 import { useLocalizedRouter } from "../../hooks/useLocalizedRouter";
-import { NAV_LINKS, SOCIAL_LINKS, IMAGE_PATHS } from "../../data/constants";
+import { NAV_LINKS, SOCIAL_LINKS, IMAGE_PATHS, LOGO_DIMENSIONS } from "../../data/constants";
 import { useLanguage } from "../../context/LanguageContext";
 import { t } from "../../locales/i18n/getTranslation";
 
@@ -179,8 +179,8 @@ const FreshHeatHeader = () => {
               <Image
                 src={IMAGE_PATHS.logo}
                 alt="logo"
-                width={120}
-                height={120}
+                width={LOGO_DIMENSIONS.width}
+                height={LOGO_DIMENSIONS.height}
                 className="w-24 h-auto object-cover"
                 quality={85}
                 loading="eager"
@@ -345,8 +345,8 @@ const FreshHeatHeader = () => {
               <Image
                 src={IMAGE_PATHS.logo}
                 alt="logo"
-                width={120}
-                height={120}
+                width={LOGO_DIMENSIONS.width}
+                height={LOGO_DIMENSIONS.height}
                 className="h-12 sm:h-14 lg:h-16 xl:h-20 w-auto object-contain transition-transform duration-300 hover:scale-105"
                 quality={85}
                 priority

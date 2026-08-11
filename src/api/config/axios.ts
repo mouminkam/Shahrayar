@@ -1,12 +1,25 @@
 /**
- * Axios instance configuration with interceptors
- * Handles authentication, error handling, and request/response transformation
+ * Client-side axios instance: base URL, auth/branch/language interceptors and
+ * centralised error handling.
+ *
+ * ⚠️ NOT CALLED IN THIS BUILD. This is the frontend-only version of the app, so
+ * every function in `src/api/*` resolves from `src/mocks/fixtures/*` instead of
+ * the network (see `src/mocks/mockClient.ts`). This file is kept, intact and
+ * unmodified from the integrated build, because it is the interesting half of
+ * the story: it shows exactly how the token is read from the Zustand persist
+ * store and attached, how the selected branch and locale ride along on every
+ * request, and how a 401 is handled. Restoring the real backend means
+ * uncommenting the `PRODUCTION:` line in each `src/api/*.ts` function — this
+ * instance is already wired and waiting.
+ *
+ * Requires NEXT_PUBLIC_API_BASE_URL; it is intentionally left unset here (see
+ * `.env.local`), so no request could silently reach a live host.
  */
 
 import axios, { type InternalAxiosRequestConfig } from "axios";
 import { getLanguageFromCookie } from "../../lib/utils/language";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://shahrayar.peaklink.pro/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,

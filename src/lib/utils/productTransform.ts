@@ -335,12 +335,10 @@ const getImageUrl = (menuItem: RawMenuItem): string => {
   if (menuItem.image_url) {
     imageUrl = menuItem.image_url;
   }
-  // Fallback: construct URL from relative image path
+  // Fallback: a bare relative path. PRODUCTION: this was resolved against
+  // NEXT_PUBLIC_API_BASE_URL's origin + "/storage/"; here it is a public path.
   else if (menuItem.image) {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://shahrayar.peaklink.pro/api/v1';
-    const storageBaseUrl = API_BASE_URL.replace('/api/v1', '');
-    const cleanPath = menuItem.image.startsWith('/') ? menuItem.image.slice(1) : menuItem.image;
-    imageUrl = `${storageBaseUrl}/storage/${cleanPath}`;
+    imageUrl = menuItem.image.startsWith('/') ? menuItem.image : `/${menuItem.image}`;
   }
   // No image available
   else {

@@ -7,6 +7,7 @@ import useCartStore from "../../../store/cartStore";
 import useToastStore from "../../../store/toastStore";
 import OrderTypeSelector from "./OrderTypeSelector";
 import api from "../../../api";
+import { mockReverseGeocode } from "../../../mocks/fixtures/geocode";
 import { useLanguage } from "../../../context/LanguageContext";
 import { t } from "../../../locales/i18n/getTranslation";
 import type { CheckoutFormData } from "../../../lib/validations/checkoutSchemas";
@@ -192,26 +193,22 @@ export default function ShippingAddressSection({ formData, setFormData }: Shippi
       setShowManualInput(false);
 
       try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-          { headers: { "User-Agent": "PeakLink/1.0" } }
-        );
-        if (!response.ok) throw new Error("Geocoding failed");
-        const data = await response.json();
+        // PRODUCTION: const response = await fetch(
+        //   `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+        // ); const data = await response.json();
+        const data = mockReverseGeocode(lat, lng);
         if (!data?.address) throw new Error("Unable to detect address automatically");
 
         const addr = data.address;
         const detectedAddress =
           data.display_name ||
-          [addr.road, addr.neighbourhood, addr.city || addr.town || addr.village]
-            .filter(Boolean)
-            .join(", ");
+          [addr.road, addr.neighbourhood, addr.city].filter(Boolean).join(", ");
 
         setFormData((prev) => ({
           ...prev,
           address: detectedAddress,
-          city: addr.city || addr.town || addr.village || addr.municipality || prev.city,
-          state: addr.state || addr.region || prev.state,
+          city: addr.city || prev.city,
+          state: addr.state || prev.state,
           zipCode: addr.postcode || prev.zipCode,
           country: addr.country || prev.country,
           latitude: lat,

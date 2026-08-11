@@ -7,6 +7,7 @@ import ProductCardSkeleton from "../../ui/ProductCardSkeleton";
 import { useInView } from "react-intersection-observer";
 import { getProxiedImageUrl } from "../../../lib/utils/imageProxy";
 import { getLocalizedField } from "../../../lib/utils/productTransform";
+import SectionHeading from "../../ui/SectionHeading";
 import type { Locale } from "../../../locales/i18n/config";
 
 export interface Chef {
@@ -20,9 +21,11 @@ export interface Chef {
 interface ChefeSectionProps {
   chefs?: Chef[];
   lang?: Locale | null;
+  /** Set only when this section is part of the home page's chapter sequence. */
+  chapter?: number;
 }
 
-export default function ChefeSection({ chefs: serverChefs = [], lang: serverLang = null }: ChefeSectionProps) {
+export default function ChefeSection({ chefs: serverChefs = [], lang: serverLang = null, chapter }: ChefeSectionProps) {
   const { lang: clientLang } = useLanguage();
 
   // Content is static and localized by the transform below. Switching language
@@ -38,44 +41,23 @@ export default function ChefeSection({ chefs: serverChefs = [], lang: serverLang
     }));
   }, [serverChefs, lang]);
 
-  // Get image URL with proxy support
-  const getImageUrl = (imageUrl?: string): string => {
-    if (!imageUrl) return "/img/chefe/chefeThumb1_1.png";
-
-    // If it's a local path, return as is
-    if (imageUrl.startsWith("/") && !imageUrl.startsWith("/storage")) {
-      return imageUrl;
-    }
-
-    // For API images, construct full URL then proxy it
-    if (imageUrl.startsWith("/storage")) {
-      const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://shahrayar.peaklink.pro/api/v1";
-      const cleanBaseURL = baseURL.replace(/\/api\/v1$/, "");
-      const fullUrl = `${cleanBaseURL}${imageUrl}`;
-      return getProxiedImageUrl(fullUrl) || "/img/chefe/chefeThumb1_1.png";
-    }
-
-    // For full URLs, use proxy
-    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-      return getProxiedImageUrl(imageUrl) || "/img/chefe/chefeThumb1_1.png";
-    }
-
-    // Fallback: try to proxy it anyway
-    return getProxiedImageUrl(imageUrl) || "/img/chefe/chefeThumb1_1.png";
-  };
+  // Resolve a chef portrait to something <Image> can render.
+  // PRODUCTION: a "/storage/..." path meant the portrait lived on the API host,
+  // so it was expanded with NEXT_PUBLIC_API_BASE_URL's origin and routed through
+  // the CORS image proxy. The mock chefs all point at /public/img/chefe/*.
+  const getImageUrl = (imageUrl?: string): string =>
+    getProxiedImageUrl(imageUrl) || "/img/chefe/chefeThumb1_1.png";
 
   return (
     <section className="chef-section py-10 sm:py-16 md:py-20 lg:py-24 relative overflow-hidden">
       <div className="chef-wrapper style1">
         <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
-          <div className="title-area mb-12 sm:mb-14">
-            <div className="sub-title text-center text-theme3 text-2xl font-bold uppercase mb-4 flex items-center justify-center gap-2">
-              {t(lang, "our_chefe")}
-            </div>
-            <div className="title text-center text-white text-3xl sm:text-5xl font-black capitalize">
-              {t(lang, "meet_our_expert_chefe")}
-            </div>
-          </div>
+          <SectionHeading
+            chapter={chapter}
+            eyebrow={t(lang, "our_chefe")}
+            title={t(lang, "meet_our_expert_chefe")}
+            className="mb-12 sm:mb-14"
+          />
 
           {!chefsData || chefsData.length === 0 ? (
             <div className="flex items-center justify-center py-20">
@@ -135,15 +117,21 @@ function LazyChefCard({ chef, index, getImageUrl }: LazyChefCardProps) {
         className="absolute -top-38 left-1/2 -translate-x-1/2 flex justify-center items-center gap-10 shrink-0 w-full"
       >
 
+        {/* The card renders this at w-70 (280px). It used to declare width 192
+            and sizes="192px", so next/image served a 192px file that the
+            browser stretched to 280 — a 1.5x upscale before device pixel ratio
+            even entered the picture, which is what made the portraits look
+            soft. The numbers below match the actual box and the intrinsic size
+            of the source files in /public/img/chefe (310x305). */}
         <OptimizedImage
           src={getImageUrl(chef.image_url)}
           alt={chef.name}
-          width={192}
-          height={192}
+          width={310}
+          height={305}
           className="w-70 h-70 object-cover  -top-10 relative z-10"
-          quality={75}
+          quality={90}
           loading="lazy"
-          sizes="192px"
+          sizes="280px"
         />
       </div>
 

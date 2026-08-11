@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Oswald } from "next/font/google";
+import { Oswald, Amiri } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import FreshHeatHeader from "../../components/layout/Header";
 import FreshHeatFooter from "../../components/layout/Footer";
@@ -7,9 +7,9 @@ import Toast from "../../components/ui/Toast";
 import BranchInitializer from "../../components/layout/BranchInitializer";
 import LenisScrollProvider from "../../components/layout/LenisScrollProvider";
 import ScrollToTopHandler from "../../components/layout/ScrollToTopHandler";
-import AuthTokenInjector from "../../components/layout/AuthTokenInjector";
 import DecorativeYellowCircles from "../../components/ui/DecorativeYellowCircles";
 import { LanguageProvider } from "../../context/LanguageContext";
+import { SITE_URL } from "../../data/constants";
 import { i18n, getDirection, type Locale } from "../../locales/i18n/config";
 import "../globals.css";
 
@@ -17,6 +17,17 @@ const oswald = Oswald({
   subsets: ["latin"],
   weight: ["200", "300", "400", "500", "600", "700"],
   variable: "--font-oswald",
+  display: "swap",
+});
+
+// Display face for hero/section headlines — a manuscript-inspired serif with
+// a real Arabic naskh companion (this site is trilingual, including RTL
+// Arabic), rather than a Latin-only decorative font used only for two of
+// three locales.
+const amiri = Amiri({
+  subsets: ["latin", "arabic"],
+  weight: ["400", "700"],
+  variable: "--font-amiri",
   display: "swap",
 });
 
@@ -36,7 +47,7 @@ export async function generateMetadata({
   params: Promise<{ lang: string }>;
 }): Promise<Metadata> {
   const { lang } = await params;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://shahrayar.peaklink.pro";
+  const siteUrl = SITE_URL;
 
   return {
     title: {
@@ -112,27 +123,34 @@ export default async function RootLayout({
   const dir = getDirection(lang);
 
   return (
-    <html lang={lang} dir={dir} className={oswald.variable}>
+    <html lang={lang} dir={dir} className={`${oswald.variable} ${amiri.variable}`}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="icon" href="/img/logo/mainlogo.png" type="image/png" />
+        {/* No hand-written <link rel="icon"> here: src/app/favicon.ico and
+            src/app/icon.png are Next file conventions, so the tags are emitted
+            automatically and /favicon.ico is actually served (the browser
+            requests it implicitly whether or not a link tag exists). */}
         {/* Preconnect to external domains for faster resource loading */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* API endpoint preconnect for banner slides - high priority */}
-        <link rel="preconnect" href="https://shahrayar.peaklink.pro" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://shahrayar.peaklink.pro" />
+        {/* PRODUCTION: a preconnect + dns-prefetch to the API host sat here, so the
+            TLS handshake for the banner-slides request was already done by the time
+            React asked for it. This build has no API host to warm up. */}
 
-        {/* Preload LCP images for faster initial render */}
-        <link rel="preload" as="image" href="/img/bg/bannerBG1_1.jpg" fetchPriority="high" />
-        <link rel="preload" as="image" href="/img/banner/bannerThumb1_1.png" fetchPriority="high" />
+        {/* No image preloads here. The banner background is only on the home
+            page, so preloading it from the root layout cost every other route
+            (shop, checkout, legal, …) a wasted 231 KB download. It now lives in
+            src/app/[lang]/page.tsx, where it is actually used. */}
       </head>
 
       <body suppressHydrationWarning className={oswald.className}>
         <LanguageProvider initialLocale={lang}>
           <DecorativeYellowCircles />
-          <AuthTokenInjector />
+          {/* PRODUCTION: <AuthTokenInjector /> sat here — it monkey-patched
+              window.fetch to attach the stored bearer token to every API
+              request. With no backend there is nothing to authenticate, so it
+              was removed rather than left as a no-op wrapper around fetch. */}
           <LenisScrollProvider>
             <ScrollToTopHandler />
             <BranchInitializer />

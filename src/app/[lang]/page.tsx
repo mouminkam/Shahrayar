@@ -33,6 +33,13 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
 
   return (
     <div className="bg-bg3 min-h-screen">
+      {/* LCP preload, scoped to the only route that uses it. React 19 hoists a
+          <link> rendered anywhere in the tree into <head>. It is applied as a
+          raw CSS background-image in BannerSection, so the browser reuses this
+          exact URL — unlike anything served through next/image, which requests
+          /_next/image?url=... and would never match a raw preload. */}
+      <link rel="preload" as="image" href="/img/bg/bannerBG1_1.jpg" fetchPriority="high" />
+
       {/* Above the fold — rendered eagerly, no loading state needed. */}
       <ErrorBoundary>
         <HeroBanner slides={heroSlides} lang={lang} />

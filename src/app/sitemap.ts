@@ -1,15 +1,15 @@
 import type { MetadataRoute } from "next";
 import { createServerAxios } from "../api/config/serverAxios";
 import { i18n } from "../locales/i18n/config";
-
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://shahrayar.peaklink.pro";
+import { SITE_URL } from "../data/constants";
 
 const STATIC_PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
   { path: "", changeFrequency: "daily", priority: 1 },
   { path: "/shop", changeFrequency: "daily", priority: 0.9 },
   { path: "/about-us", changeFrequency: "monthly", priority: 0.7 },
   { path: "/contact-us", changeFrequency: "monthly", priority: 0.7 },
+  { path: "/terms-conditions", changeFrequency: "yearly", priority: 0.3 },
+  { path: "/privacy-policy", changeFrequency: "yearly", priority: 0.3 },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

@@ -5,6 +5,7 @@ import { formatCurrency } from "../../../lib/utils/formatters";
 import { usePrefetchRoute } from "../../../hooks/usePrefetchRoute";
 import OptimizedImage from "../../ui/OptimizedImage";
 import ProductCardSkeleton from "../../ui/ProductCardSkeleton";
+import SectionHeading from "../../ui/SectionHeading";
 import { useInView } from "react-intersection-observer";
 import { useLanguage } from "../../../context/LanguageContext";
 import { t } from "../../../locales/i18n/getTranslation";
@@ -50,14 +51,7 @@ export default function LatestItemsSection({ rawLatestData = null, lang: serverL
     <section className="latest-items-section py-10 sm:py-16 md:py-20 lg:py-24 relative overflow-hidden">
       <div className="latest-items-wrapper style1">
         <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
-          <div className="title-area mb-12 sm:mb-14">
-            <div className="sub-title text-center text-theme3 text-2xl font-bold uppercase mb-4 flex items-center justify-center gap-2">
-              {t(lang, "latest_items")}
-            </div>
-            <div className="title text-center text-white text-3xl sm:text-5xl font-black capitalize">
-              {t(lang, "new_arrivals")}
-            </div>
-          </div>
+          <SectionHeading chapter={1} eyebrow={t(lang, "latest_items")} title={t(lang, "new_arrivals")} className="mb-12 sm:mb-14" />
 
           <div className="latest-items-card-wrap style1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {latest.map((dish, index) => {
@@ -101,10 +95,10 @@ function LazyCard({ dish, index, prefetchRoute, lang }: LazyCardProps) {
             onMouseEnter={() => prefetchRoute(`/shop/${dish.id}`)}
           >
             <Image
-              src="/img/food-items/circleShape.png"
+              src="/img/food-items/circleShape2.png"
               alt="shape"
-              width={150}
-              height={150}
+              width={324}
+              height={324}
               className="w-51 h-51 -top-[46px] absolute z-0 animate-spin-slow"
               unoptimized={true}
             />
@@ -114,7 +108,7 @@ function LazyCard({ dish, index, prefetchRoute, lang }: LazyCardProps) {
               width={192}
               height={192}
               className="w-48 h-48 object-cover rounded-full -top-10 relative z-10"
-              quality={75}
+              quality={85}
               loading="lazy"
               sizes="192px"
             />

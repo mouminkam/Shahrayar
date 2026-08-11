@@ -2,6 +2,7 @@
 import { useState, useMemo } from "react";
 import OptimizedImage from "../../ui/OptimizedImage";
 import Link from "@/components/ui/LocalizedLink";
+import SectionHeading from "../../ui/SectionHeading";
 import { formatCurrency } from "../../../lib/utils/formatters";
 import { usePrefetchRoute } from "../../../hooks/usePrefetchRoute";
 import { transformCategories, transformMenuItemsToProducts } from "../../../lib/utils/productTransform";
@@ -40,15 +41,12 @@ export default function FoodMenuSection({ lang: serverLang = null }: FoodMenuSec
       <div className="food-menu-wrapper style1">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           <div className="food-menu-tab-wrapper">
-            {/* Title Area */}
-            <div className="title-area text-center mb-12 lg:mb-16">
-              <div className="sub-title text-theme3  text-2xl font-bold uppercase mb-4 flex items-center justify-center gap-2">
-                {t(lang, "food_menu")}
-              </div>
-              <h2 className="title text-white  text-3xl sm:text-4xl lg:text-5xl font-black">
-                {t(lang, "fresheat_foods_menu")}
-              </h2>
-            </div>
+            <SectionHeading
+              chapter={5}
+              eyebrow={t(lang, "food_menu")}
+              title={t(lang, "fresheat_foods_menu")}
+              className="mb-12 lg:mb-16"
+            />
 
             {/* Tabs */}
             <div className="food-menu-tab mb-8">
@@ -95,7 +93,7 @@ export default function FoodMenuSection({ lang: serverLang = null }: FoodMenuSec
                             width={96}
                             height={96}
                             className="w-24 h-24 object-cover rounded-full"
-                            quality={75}
+                            quality={85}
                             loading="lazy"
                             sizes="96px"
                           />

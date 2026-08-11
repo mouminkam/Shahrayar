@@ -31,6 +31,13 @@ export default function QuickLinks() {
     return { href: link.href, label };
   });
 
+  // The legal pages are deliberately not in NAV_LINKS — they do not belong in
+  // the header nav, but a footer is where people look for them.
+  const legalLinks = [
+    { href: "/terms-conditions", label: t(lang, "terms_conditions") },
+    { href: "/privacy-policy", label: t(lang, "privacy_policy") },
+  ];
+
   return (
     <div className="mt-6 sm:mt-8 md:mt-0 lg:pl-6 xl:pl-12">
       <div className="mb-6 sm:mb-8">
@@ -43,8 +50,8 @@ export default function QuickLinks() {
         </h3>
       </div>
       <ul className="space-y-3 sm:space-y-4 md:space-y-5">
-        {links.map((link, index) => (
-          <li key={index} className="transition-all duration-300 hover:translate-x-1">
+        {[...links, ...legalLinks].map((link) => (
+          <li key={link.href} className="transition-all duration-300 hover:translate-x-1">
             <LocalizedLink
               href={link.href}
               onMouseEnter={() => prefetchRoute(link.href)}

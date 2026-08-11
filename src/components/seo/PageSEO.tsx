@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { SITE_URL } from "../../data/constants";
 
 interface PageSEOProps {
   /** Page title */
@@ -27,7 +28,7 @@ export default function PageSEO({
   type = "website",
   keywords = [],
 }: PageSEOProps) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://shahrayar.peaklink.pro";
+  const siteUrl = SITE_URL;
   const fullUrl = url ? `${siteUrl}${url}` : siteUrl;
   const imageUrl = image.startsWith("http") ? image : `${siteUrl}${image}`;
   const fullTitle = title.includes("Shahrayar") ? title : `${title} | Shahrayar Restaurant`;

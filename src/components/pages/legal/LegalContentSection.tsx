@@ -4,6 +4,14 @@ import { t } from "../../../locales/i18n/getTranslation";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 // PHASE-A FIX [H2]: sanitize HTML to prevent XSS
 import DOMPurify from "isomorphic-dompurify";
+import type { Locale } from "../../../locales/i18n/config";
+
+/** BCP-47 tag per app locale, for Intl date formatting. */
+const DATE_LOCALES: Record<Locale, string> = {
+  en: "en-US",
+  ar: "ar",
+  bg: "bg-BG",
+};
 
 export interface LegalContentData {
   content: string;
@@ -28,12 +36,14 @@ interface LegalContentSectionProps {
 export default function LegalContentSection({ content, isLoading, error, onRetry }: LegalContentSectionProps) {
   const { lang } = useLanguage();
 
-  // Format date for display
+  // Format date for display. The map is exhaustive over i18n.locales — an
+  // earlier two-locale version fell back to bg-BG for anything that was not
+  // "en", which rendered Arabic pages with Bulgarian month names.
   const formatDate = (dateString?: string | null) => {
     if (!dateString) return "";
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString(lang === "en" ? "en-US" : "bg-BG", {
+      return date.toLocaleDateString(DATE_LOCALES[lang as Locale] ?? "en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",

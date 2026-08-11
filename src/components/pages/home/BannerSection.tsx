@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import type { Swiper as SwiperInstance } from "swiper";
 import { Autoplay, EffectFade } from "swiper/modules";
@@ -34,7 +34,6 @@ interface BannerSlide {
   image: string;
   bgImage: string;
   link: string;
-  shape4Float: boolean;
 }
 
 interface BannerSectionProps {
@@ -42,71 +41,44 @@ interface BannerSectionProps {
   lang?: Locale | null;
 }
 
+/**
+ * Hero. Every home section beneath this one opens with the same eyebrow +
+ * khatim-mark + serif-headline pattern (see SectionHeading) — the hero uses
+ * the identical vocabulary, just laid out for the two-column banner instead
+ * of a centered block, so the page reads as one voice from the first pixel.
+ */
 export default function BannerSection({ slides: apiSlides = [], lang: serverLang = null }: BannerSectionProps) {
   const { prefetchRoute } = usePrefetchRoute();
   const { lang: clientLang } = useLanguage();
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Content is static and localized by the transform below. Switching language
-  // navigates to a different locale route, which re-renders this with new
-  // props — so there's nothing to refetch and no hydration dance to manage.
   const lang = serverLang || clientLang;
 
-  // Map slide content to component format
   const slides: BannerSlide[] = useMemo(() => {
     if (!apiSlides || apiSlides.length === 0) {
       return [];
     }
 
-    return apiSlides.map((slide, index) => ({
+    return apiSlides.map((slide) => ({
       id: slide.id,
       subtitle: getLocalizedField(slide, "description", lang) || slide.description || t(lang, "welcome_fresheat"),
       title: getLocalizedField(slide, "title", lang) || slide.title || "",
       image: getProxiedImageUrl(slide.desktop_image || "") || "/img/bg/bannerBG1_1.jpg",
       bgImage: "/img/bg/bannerBG1_1.jpg",
       link: slide.menu_item_id ? `/shop/${slide.menu_item_id}` : "/shop",
-      shape4Float: index % 2 === 0,
     }));
   }, [apiSlides, lang]);
 
   const currentSlide = slides[activeIndex] || slides[0];
-  const preloadedImagesRef = useRef<Set<string>>(new Set());
 
-  // Preload first slide image for better LCP
-  useEffect(() => {
-    if (slides.length > 0 && slides[0]?.image) {
-      const firstImage = slides[0].image;
+  // No hand-rolled <link rel="preload"> for the first slide image here. It
+  // pointed at the raw source path, but the image below renders through
+  // next/image, which requests /_next/image?url=...&w=...&q=... — so the
+  // browser never matched the preload and simply downloaded the file twice
+  // ("preloaded but not used" in the console). The <Image> already carries
+  // priority={activeIndex === 0}, which makes Next emit a preload for the
+  // exact optimized URL it is going to request.
 
-      // Skip if already preloaded
-      if (preloadedImagesRef.current.has(firstImage)) {
-        return;
-      }
-
-      // Create preload link
-      const link = document.createElement("link");
-      link.rel = "preload";
-      link.as = "image";
-      link.href = firstImage;
-      link.fetchPriority = "high";
-
-      // Add crossorigin if image is from external domain
-      if (firstImage.startsWith("http")) {
-        link.crossOrigin = "anonymous";
-      }
-
-      document.head.appendChild(link);
-      preloadedImagesRef.current.add(firstImage);
-
-      // Cleanup function
-      return () => {
-        if (document.head.contains(link)) {
-          document.head.removeChild(link);
-        }
-      };
-    }
-  }, [slides]);
-
-  // Show skeleton loader when no slides
   if (!slides || slides.length === 0) {
     return (
       <section className="banner-section fix mb-8">
@@ -117,29 +89,21 @@ export default function BannerSection({ slides: apiSlides = [], lang: serverLang
           >
             <div className="overlay absolute inset-0 bg-title opacity-30"></div>
           </div>
-
-          {/* Fixed Content Container */}
           <div className="banner-container absolute inset-0 z-50 py-12 sm:py-16 md:py-20 lg:py-32 xl:py-40 mt-18 sm:mt-20 md:mt-24 lg:mt-0">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 h-full">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 md:gap-12 lg:gap-12 items-center h-full">
-                {/* Image Skeleton - Right Side */}
                 <div className="col-span-1 lg:col-span-1 order-1 lg:order-2 flex justify-center lg:justify-end items-center">
                   <div className="banner-thumb-area relative z-50 w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl animate-pulse">
                     <div className="w-full aspect-square bg-gray-700/50 rounded-2xl"></div>
                   </div>
                 </div>
-
-                {/* Text Content Skeleton - Left Side */}
                 <div className="col-span-1 lg:col-span-1 order-2 lg:order-1 mt-4 sm:mt-0 md:mt-0 w-full lg:w-auto">
                   <div className="banner-title-area w-full lg:w-auto relative min-h-[200px] sm:min-h-[250px] md:min-h-[280px] lg:min-h-[300px] space-y-4 animate-pulse">
-                    {/* Subtitle Skeleton */}
                     <div className="h-6 sm:h-8 bg-gray-700/50 rounded w-1/3 lg:w-1/4"></div>
-                    {/* Title Skeleton */}
                     <div className="space-y-3">
                       <div className="h-8 sm:h-10 md:h-12 lg:h-16 bg-gray-700/50 rounded w-3/4"></div>
                       <div className="h-8 sm:h-10 md:h-12 lg:h-16 bg-gray-700/50 rounded w-2/3"></div>
                     </div>
-                    {/* Button Skeleton */}
                     <div className="h-12 sm:h-14 bg-gray-700/50 rounded w-32 sm:w-40"></div>
                   </div>
                 </div>
@@ -161,51 +125,23 @@ export default function BannerSection({ slides: apiSlides = [], lang: serverLang
           loop={slides.length > 1}
           effect="fade"
           speed={800}
-          autoplay={
-            slides.length > 1
-              ? {
-                  delay: 3000,
-                  disableOnInteraction: false,
-                }
-              : false
-          }
+          autoplay={slides.length > 1 ? { delay: 4200, disableOnInteraction: false } : false}
           onSlideChange={(swiper: SwiperInstance) => setActiveIndex(swiper.realIndex)}
           className="banner-slider"
         >
-          {slides.length > 0 &&
-            slides.map((slide) => (
-              <SwiperSlide key={slide.id}>
-                <div
-                  className="relative bg-cover bg-center min-h-[800px]"
-                  style={{
-                    backgroundImage: `url(${slide.bgImage})`,
-                  }}
-                >
-                  {/* Shapes */}
-                  <div className="shape1_1 hidden xxl:block">
-                    <Image src="/img/shape/bannerShape1_1.svg" alt="shape" width={100} height={100} unoptimized={true} />
-                  </div>
-                  <div className="shape1_2 hidden xxl:block">
-                    <Image src="/img/shape/bannerShape1_2.svg" alt="shape" width={80} height={80} unoptimized={true} />
-                  </div>
-                  <div className="shape1_3 hidden xxl:block">
-                    <Image src="/img/shape/bannerShape1_3.svg" alt="shape" width={120} height={120} unoptimized={true} />
-                  </div>
-                  <div className={`shape1_4 hidden xxl:block ${slide.shape4Float ? "float-bob-x" : ""}`}>
-                    <Image src="/img/shape/bannerShape1_4.svg" alt="shape" width={90} height={90} unoptimized={true} />
-                  </div>
-                  <div className="shape1_5 hidden xxl:block">
-                    <Image src="/img/shape/bannerShape1_5.svg" alt="shape" width={70} height={70} unoptimized={true} />
-                  </div>
-                  <div className="shape1_6 hidden xxl:block cir36">
-                    <Image src="/img/shape/bannerShape1_6.svg" alt="shape" width={100} height={100} unoptimized={true} />
-                  </div>
-
-                  {/* Overlay */}
-                  <div className="overlay absolute inset-0 bg-title opacity-30"></div>
-                </div>
-              </SwiperSlide>
-            ))}
+          {slides.map((slide) => (
+            <SwiperSlide key={slide.id}>
+              <div
+                className="relative bg-cover bg-center min-h-[800px]"
+                style={{ backgroundImage: `url(${slide.bgImage})` }}
+              >
+                {/* Night sky + lantern glow, replacing the old confetti-shape sprites */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/55 to-bg3" />
+                <div className="hero-lantern-glow absolute right-[8%] top-1/2 -translate-y-1/2 w-[42vw] max-w-[640px] aspect-square rounded-full" />
+                <div className="hero-star-field absolute inset-0" aria-hidden="true" />
+              </div>
+            </SwiperSlide>
+          ))}
         </Swiper>
 
         {/* Fixed Content Container */}
@@ -217,10 +153,10 @@ export default function BannerSection({ slides: apiSlides = [], lang: serverLang
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentSlide.id}
-                    initial={{ x: "100%", opacity: 0 }}
+                    initial={{ x: "6%", opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: "100%", opacity: 0 }}
-                    transition={{ type: "tween", duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+                    exit={{ x: "-4%", opacity: 0 }}
+                    transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                     style={{ willChange: "transform, opacity" }}
                     className="banner-thumb-area relative z-50 w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl pointer-events-auto"
                   >
@@ -229,7 +165,7 @@ export default function BannerSection({ slides: apiSlides = [], lang: serverLang
                       alt={currentSlide?.title || "banner"}
                       width={1200}
                       height={1200}
-                      className="w-full h-auto object-contain"
+                      className="w-full h-auto object-contain drop-shadow-[0_25px_60px_rgba(0,0,0,0.55)]"
                       quality={80}
                       priority={activeIndex === 0}
                       fetchPriority={activeIndex === 0 ? "high" : "auto"}
@@ -240,50 +176,62 @@ export default function BannerSection({ slides: apiSlides = [], lang: serverLang
                 </AnimatePresence>
               </div>
 
-              {/* Text Content - Left Side - Fixed Container */}
+              {/* Text Content - Left Side */}
               <div className="col-span-1 lg:col-span-1 order-2 lg:order-1 mt-4 sm:mt-0 md:mt-0 w-full lg:w-auto">
                 <div className="banner-title-area w-full lg:w-auto relative min-h-[200px] sm:min-h-[250px] md:min-h-[280px] lg:min-h-[300px] mt-0 lg:mt-0">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={currentSlide.id}
-                      initial={{ x: "-100%", opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      exit={{ x: "-100%", opacity: 0 }}
-                      transition={{ type: "tween", duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+                      initial={{ y: 14, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: -10, opacity: 0 }}
+                      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                       style={{ willChange: "transform, opacity" }}
                       className="banner-style1 w-full lg:w-auto pointer-events-auto"
                     >
                       <div className="section-title text-center lg:text-left w-full lg:w-auto">
-                        <motion.h6
-                          initial={{ y: -20, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
-                          className="sub-title text-theme  text-sm sm:text-2xl font-extrabold uppercase mb-3 sm:mb-1"
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.15, duration: 0.5 }}
+                          className="flex items-center gap-3 mb-4 justify-center lg:justify-start text-theme3"
                         >
-                          {currentSlide?.subtitle || t(lang, "welcome_fresheat")}
-                        </motion.h6>
+                          <svg viewBox="0 0 32 32" className="w-4 h-4" fill="none" aria-hidden="true">
+                            <path
+                              d="M16 2 L20 12 L30 16 L20 20 L16 30 L12 20 L2 16 L12 12 Z"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em]">
+                            {currentSlide?.subtitle || t(lang, "welcome_fresheat")}
+                          </p>
+                        </motion.div>
+
                         <motion.h1
-                          initial={{ y: -20, opacity: 0 }}
+                          initial={{ y: 10, opacity: 0 }}
                           animate={{ y: 0, opacity: 1 }}
-                          transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
-                          className="title text-white  text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-8xl font-black leading-tight mb-4 sm:mb-6"
+                          transition={{ delay: 0.22, duration: 0.55, ease: "easeOut" }}
+                          className="title font-[family-name:var(--font-amiri)] text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.05] mb-6"
                         >
                           {currentSlide?.title || ""}
                         </motion.h1>
+
                         <motion.div
-                          initial={{ y: 20, opacity: 0 }}
+                          initial={{ y: 14, opacity: 0 }}
                           animate={{ y: 0, opacity: 1 }}
-                          transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
+                          transition={{ delay: 0.32, duration: 0.55, ease: "easeOut" }}
                           className="flex justify-center lg:justify-start"
                         >
-                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
                             <Link
-                              className="theme-btn px-6 py-2.5 sm:px-8 sm:py-3 bg-theme3 text-gray-900 text-sm sm:text-base font-medium hover:bg-theme hover:text-white transition-colors duration-300 rounded-xl shadow-md hover:shadow-lg inline-flex items-center justify-center gap-2"
+                              className="hero-cta group inline-flex items-center justify-center gap-2 px-7 py-3 sm:px-9 sm:py-3.5 text-sm sm:text-base font-semibold uppercase tracking-wide rounded-full"
                               href={currentSlide?.link || "/shop"}
                               onMouseEnter={() => prefetchRoute(currentSlide?.link || "/shop")}
                             >
                               {t(lang, "order_now")}
-                              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:translate-x-1" />
                             </Link>
                           </motion.div>
                         </motion.div>
@@ -295,6 +243,20 @@ export default function BannerSection({ slides: apiSlides = [], lang: serverLang
             </div>
           </div>
         </div>
+
+        {slides.length > 1 && (
+          <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2">
+            {slides.map((slide, i) => (
+              <span
+                key={slide.id}
+                className={`h-1 rounded-full transition-all duration-500 ${
+                  i === activeIndex ? "w-8 bg-theme3" : "w-2 bg-white/30"
+                }`}
+                aria-hidden="true"
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
