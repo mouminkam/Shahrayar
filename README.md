@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://shahrayar.vercel.app/en">
+  <a href="https://shahrayar.vercel.app/en" target="_blank" rel="noopener noreferrer">
     <img alt="Live Demo" src="https://img.shields.io/badge/▶_LIVE_DEMO-shahrayar.vercel.app-EB0029?style=for-the-badge&logoColor=white" />
   </a>
 </p>
