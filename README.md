@@ -10,6 +10,12 @@
 </p>
 
 <p align="center">
+  <a href="https://shahrayar.vercel.app/en">
+    <img alt="Live Demo" src="https://img.shields.io/badge/▶_LIVE_DEMO-shahrayar.vercel.app-EB0029?style=for-the-badge&logoColor=white" />
+  </a>
+</p>
+
+<p align="center">
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" />
   <img alt="React" src="https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white" />
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white" />
@@ -27,14 +33,15 @@ browsing, per-dish customization, cart, coupons, delivery quotes, checkout, orde
 full auth flow, in **three languages** with correct right-to-left rendering for Arabic. It's built
 the way you'd build the real thing, then had its network cord cut on purpose.
 
-> 🔗 **Live, backend-connected version:** *add link here once deployed*
+> 🔗 **[shahrayar.vercel.app](https://shahrayar.vercel.app/en)** is this exact repository, deployed as-is — nothing
+> hidden behind it.
 >
-> This repository is the **frontend-only** half of that project, published on its own so it can be
-> read end to end as a piece of frontend engineering — no backend, no database, no API keys required
-> to clone it and have it running in under a minute. Every function that would normally call a
-> network endpoint resolves against realistic local fixtures instead, through the *exact same seam*
-> a real API call would use. See [Mock data architecture](#mock-data-architecture) for where that
-> seam is, and how thin the diff is to reconnect it.
+> There's no backend, no database, and no API keys anywhere in this build, on purpose: it's meant to be read
+> end to end as a piece of frontend engineering, cloned and running locally in under a minute, or clicked
+> straight through in the browser above. Every function that would normally call a network endpoint resolves
+> against realistic local fixtures instead, through the *exact same seam* a real API call would use. See
+> [Mock data architecture](#mock-data-architecture) for where that seam is, and how thin the diff is to
+> reconnect it.
 
 ## Getting started
 
