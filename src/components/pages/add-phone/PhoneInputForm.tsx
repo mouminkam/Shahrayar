@@ -67,7 +67,7 @@ export default function PhoneInputForm() {
           className={`w-full px-4 py-3 bg-white/10 border ${
             errors.phone ? "border-red-500" : "border-white/20"
           } rounded-xl text-white placeholder-text/50 focus:outline-none focus:border-theme3 focus:ring-2 focus:ring-theme3/20 transition-all duration-300`}
-          placeholder="+963933310888"
+          placeholder="+963 9XX XXX XXX"
         />
         {errors.phone && (
           <p className="mt-1 text-red-400 text-sm">{errors.phone}</p>
