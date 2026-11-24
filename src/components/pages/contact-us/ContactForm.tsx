@@ -96,7 +96,7 @@ ${t(lang, "email_footer")}`;
       const mailtoLink = `mailto:${branchEmail}?subject=${encodeURIComponent(`Contact Form: ${emailSubject}`)}&body=${encodeURIComponent(emailBody)}`;
 
       // Open email client
-      window.location.href = mailtoLink;
+      window.location.assign(mailtoLink);
 
       toastSuccess(t(lang, "opening_email_client"));
 
