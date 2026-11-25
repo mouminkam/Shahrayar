@@ -82,10 +82,10 @@ export async function generateMetadata({
         "Experience authentic Middle Eastern flavors at Shahrayar Restaurant. Fresh ingredients, traditional recipes, and genuine hospitality.",
       images: [
         {
-          url: "/img/logo/mainlogo.png",
+          url: "/og.jpg",
           width: 1200,
           height: 630,
-          alt: "Shahrayar Restaurant",
+          alt: "Shahrayar — restaurant ordering storefront",
         },
       ],
     },
@@ -93,7 +93,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: "Shahrayar Restaurant - Authentic Middle Eastern Cuisine",
       description: "Experience authentic Middle Eastern flavors at Shahrayar Restaurant.",
-      images: ["/img/logo/mainlogo.png"],
+      images: ["/og.jpg"],
     },
     robots: {
       index: true,

@@ -44,7 +44,9 @@ export const ITEMS_PER_PAGE = 12; // Default for backward compatibility
  * localhost fallback keeps dev honest rather than baking a stale domain into
  * the generated SEO output.
  */
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+// Absolute origin for metadata, the sitemap and link previews. Without it, shared links
+// pointed at localhost and LinkedIn, Slack and others showed no preview.
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shahrayar.vercel.app";
 
 /**
  * Intrinsic dimensions of the logo file (public/img/logo/mainlogo.png is
